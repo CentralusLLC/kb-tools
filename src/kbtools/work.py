@@ -279,7 +279,7 @@ Items live in [items/](items/), one file each. Create them with
 """
     atomic_write(folder / "epic.md", epic)
     atomic_write(folder / "plan.md", plan)
-    write_index(repo)
+    _refresh(repo)
     return folder
 
 
@@ -319,8 +319,15 @@ Part of [epic {epic.number}](../epic.md) ([plan](../plan.md)).
 > TODO: Design notes, constraints, links. Record decisions that outlive this item as ADRs.
 """
     atomic_write(path, text)
-    write_index(repo)
+    _refresh(repo)
     return path
+
+
+def _refresh(repo: Repo) -> None:
+    from .catalog import refresh_if_present
+
+    write_index(repo)
+    refresh_if_present(repo)
 
 
 def set_status(repo: Repo, ident: str, status: str) -> Path:
@@ -336,7 +343,7 @@ def set_status(repo: Repo, ident: str, status: str) -> Path:
                 if not count:
                     raise SystemExit(f"kb: {repo.rel(path)} has no work_status line")
                 atomic_write(path, updated)
-                write_index(repo)
+                _refresh(repo)
                 return path
     raise SystemExit(f"kb: no epic or item with id {ident}")
 

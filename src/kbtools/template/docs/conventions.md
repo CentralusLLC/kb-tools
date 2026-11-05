@@ -89,6 +89,7 @@ list is the project's vocabulary. Add new types here before using them.
 | `Implementation Plan` | How an epic is delivered (`work/epics/NNNN-*/plan.md`) |
 | `Work Item` | A story or task within an epic (`work/epics/NNNN-*/items/NN-*.md`) |
 | `Template` | Page templates in `references/templates/` |
+| `Catalog` | The generated page list (`catalog.md`) |
 
 ## Verification and trust
 

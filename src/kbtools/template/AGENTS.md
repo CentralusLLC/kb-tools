@@ -8,7 +8,7 @@ others) working in {{PROJECT}}.
 This project's rules and context live in its knowledge base, `docs/`, an Open Knowledge
 Format (OKF) bundle. Before starting any task:
 
-1. Read [`docs/index.md`](docs/index.md).
+1. Read [`docs/index.md`](docs/index.md) and the page list in [`docs/catalog.md`](docs/catalog.md).
 2. Read and follow [`docs/process/agent-workflow.md`](docs/process/agent-workflow.md).
 3. Read the section pages that match your task (architecture, business, domains,
    environments, process), not the whole bundle.

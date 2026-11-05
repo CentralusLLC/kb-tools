@@ -145,6 +145,19 @@ def cmd_work(args) -> int:
     return 0
 
 
+def cmd_catalog(args) -> int:
+    from . import catalog
+
+    repo = _repo(args)
+    if args.write:
+        print(f"updated {repo.rel(catalog.write(repo))}")
+        return 0
+    rows = catalog.select(catalog.records(repo), type_=args.type, section=args.section, tag=args.tag,
+                          tier=args.tier, status=args.status, work_status=args.work_status, text=args.text)
+    print(catalog.render(rows, args.format), end="")
+    return 0
+
+
 def cmd_check(args) -> int:
     from .check import run_checks
 
@@ -244,6 +257,18 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_argument("--status")
     w.add_argument("--open", action="store_true", help="only items and epics not done or cancelled")
     p.set_defaults(func=cmd_work)
+
+    p = sub.add_parser("catalog", help="list every page (path, type, description, tags, trust); --write updates docs/catalog.md")
+    p.add_argument("--write", action="store_true", help="regenerate docs/catalog.md (unfiltered)")
+    p.add_argument("--format", choices=["md", "json", "jsonl"], default="md")
+    p.add_argument("--type", help="page type, e.g. 'Work Item'")
+    p.add_argument("--section", help="top-level section, e.g. domains")
+    p.add_argument("--tag")
+    p.add_argument("--tier", choices=["human", "machine", "unverified"])
+    p.add_argument("--status", help="draft|stable|deprecated")
+    p.add_argument("--work-status")
+    p.add_argument("--text", help="words that must all appear in path, title, description or tags")
+    p.set_defaults(func=cmd_catalog)
 
     p = sub.add_parser("check", help="validate the ingest log, OKF front matter, links, images and diagrams")
     p.add_argument("--strict", action="store_true", help="fail on warnings too")

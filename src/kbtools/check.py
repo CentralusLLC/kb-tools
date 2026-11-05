@@ -111,4 +111,8 @@ def run_checks(repo: Repo) -> tuple[list[str], list[str]]:
     work_errors, work_warnings = validate_work(repo)
     errors += work_errors
     warnings += work_warnings
+    from .catalog import is_stale
+
+    if is_stale(repo):
+        warnings.append("docs/catalog.md is out of date (run `kb catalog --write`)")
     return errors, warnings

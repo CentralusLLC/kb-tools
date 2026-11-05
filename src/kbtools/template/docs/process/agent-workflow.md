@@ -15,8 +15,10 @@ Every AI agent working in this repository follows these rules, whatever tool it 
 
 ## Before starting a task
 
-1. Read [the knowledge base index](../index.md), then the section index that matches the
-   task. Read only the pages that apply.
+1. Read [the knowledge base index](../index.md) and the [catalog](../catalog.md), then the
+   pages that apply. To find pages, filter the catalog (`tools/kb catalog --text "..."`,
+   `--type`, `--tag`), search with grep or ripgrep, and check [glossary](../domains/glossary.md)
+   aliases for other words for the same thing.
 2. Before changing code, read [Development](development.md). Before changing `docs/`, read
    [Knowledge base maintenance](knowledge-base.md).
 3. For domain topics, read the topic's sub-wiki in [domains](../domains/index.md), and use the

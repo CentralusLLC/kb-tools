@@ -35,7 +35,7 @@ It installs:
 | Path | Contents |
 | --- | --- |
 | `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` | Agent entry points that point into `docs/` (existing files are kept; the command prints a snippet to add) |
-| `docs/index.md`, `log.md`, `conventions.md` | OKF v0.2 bundle root, change log, conventions (verification and trust, figures, diagrams) |
+| `docs/index.md`, `catalog.md`, `log.md`, `conventions.md` | OKF v0.2 bundle root, change log, conventions (verification and trust, figures, diagrams) |
 | `docs/architecture/` | System overview, research-data conventions, decisions with ADR 0001 (adopting the knowledge base) |
 | `docs/business/` | Vision, audience, branding, business model and rules |
 | `docs/domains/` | Glossary, plus how to add topic sub-wikis |
@@ -80,7 +80,8 @@ tools/kb report                                 # verification level and age per
 | `figure` | Crops or resizes a render or embedded image into `docs/`. Prints a Markdown snippet with alt text, a caption, the source, and an element table to fill in. |
 | `log` | Updates one ingest-log row safely (status, outputs, notes, rehash). |
 | `work new-epic` / `new-item` / `set` / `list` / `index` | Repository-native work tracking in `docs/work/`: epics (`NNNN`) with `epic.md` and `plan.md`, items (`NNNN-NN`) in `items/`, `work_status` per epic and item, and a generated roadmap. See the template's `docs/process/work-tracking.md`. |
-| `check` | Checks the ingest log (statuses, hashes, outputs), OKF front matter, links, images (alt text), that every Mermaid diagram is followed by an element list or table, and the work tree (IDs, statuses, dependencies, roadmap freshness). Exits non-zero on errors. |
+| `catalog` | One record per page: path, section, type, title, description, tags, status, `work_status`, trust tier, last verification. `--write` regenerates the committed `docs/catalog.md` (Markdown grouped by section; only fields that change with the pages, so it never drifts on its own). Filters (`--type`, `--section`, `--tag`, `--tier`, `--status`, `--work-status`, `--text`) print `md`, `json` or `jsonl` on demand, so no JSON copy is stored and `jq` is optional. |
+| `check` | Checks the ingest log (statuses, hashes, outputs), OKF front matter, links, images (alt text), that every Mermaid diagram is followed by an element list or table, the work tree (IDs, statuses, dependencies, roadmap freshness), and catalog freshness. Exits non-zero on errors. |
 | `report` | Gives each page a trust tier (human, machine or unverified), its last verification, its age, and flags (`changed-since-verified`, `stale`, `verification-old`, `deprecated`). |
 | `serve` | Runs an MCP server (streamable HTTP) exposing the commands as tools. |
 
@@ -120,7 +121,7 @@ agents' workspaces at the same path the agents see:
 ```
 
 Then add an MCP connection in Paperclip for `http://<kb-mcp-url>`. Agents call
-`kb_scaffold`, `kb_work_list`, `kb_work_new_epic`, `kb_work_new_item`, `kb_work_set`, `kb_inventory`, `kb_extract`, `kb_figure`, `kb_log`, `kb_check` and `kb_report`, passing
+`kb_scaffold`, `kb_catalog`, `kb_work_list`, `kb_work_new_epic`, `kb_work_new_item`, `kb_work_set`, `kb_inventory`, `kb_extract`, `kb_figure`, `kb_log`, `kb_check` and `kb_report`, passing
 `repo` as the absolute path of their checkout. Requests for paths outside `--allowed-root`
 are refused.
 

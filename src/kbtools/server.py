@@ -115,6 +115,19 @@ def build_server(host: str = "0.0.0.0", port: int = 8765):
         return _run(repo, *args)
 
     @mcp.tool(annotations=read)
+    def kb_catalog(repo: str, format: str = "md", type: str = "", section: str = "", tag: str = "",
+                   tier: str = "", status: str = "", work_status: str = "", text: str = "") -> str:
+        """List knowledge pages (path, type, title, description, tags, status, work_status, trust tier,
+        last verification). Filter by type/section/tag/tier/status/work_status or words in `text`.
+        format: md (compact, grouped by section) | json | jsonl. Start here to find pages."""
+        args = ["catalog", "--format", format]
+        for flag, value in (("--type", type), ("--section", section), ("--tag", tag), ("--tier", tier),
+                            ("--status", status), ("--work-status", work_status), ("--text", text)):
+            if value:
+                args += [flag, value]
+        return _run(repo, *args)
+
+    @mcp.tool(annotations=read)
     def kb_work_list(repo: str, status: str = "", open_only: bool = False) -> str:
         """List epics and work items in docs/work/ (id, kind, title, work_status, dependencies, path)."""
         return _run(repo, "work", "list", *(["--status", status] if status else []), *(["--open"] if open_only else []))

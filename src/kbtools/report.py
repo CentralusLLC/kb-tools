@@ -23,7 +23,7 @@ def page_trust(repo: Repo, max_age_days: int, now: datetime | None = None) -> li
         if not okf.is_concept(path):
             continue
         data, _, error = okf.parse_front_matter(path.read_text(encoding="utf-8", errors="replace"))
-        if error or data is None or okf.is_template(data):
+        if error or data is None or okf.is_template(data) or str(data.get("type", "")).strip() == "Catalog":
             continue
         entries = okf.verified_entries(data)
         stamps = [(str(e.get("by", "")), to_datetime(e.get("at"))) for e in entries]

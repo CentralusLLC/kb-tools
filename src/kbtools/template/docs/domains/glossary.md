@@ -12,8 +12,9 @@ generated:
 # Glossary
 
 Keep terms in alphabetical order; link each to its concept page when one exists, and cite
-where the definition comes from.
+where the definition comes from. **Aliases** lists other words people use for the same
+thing (synonyms, abbreviations, old names), so searches with the "wrong" word still land here.
 
-| Term | Definition |
-| --- | --- |
-| TODO | |
+| Term | Aliases | Definition |
+| --- | --- | --- |
+| TODO | | |

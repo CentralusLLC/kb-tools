@@ -12,6 +12,7 @@ bundle that travels with the repository.
 ## Start here (agents and new contributors)
 
 1. Read [Agent workflow](process/agent-workflow.md): the rules for every task.
+   Use the [catalog](catalog.md) (every page, one line each) to find pages.
 2. Open the section index that matches your task and read the pages it points to.
    Do not read the whole bundle up front.
 3. When sources disagree, follow [precedence](process/agent-workflow.md#precedence).
@@ -29,6 +30,7 @@ bundle that travels with the repository.
 
 ## About this bundle
 
+- [Catalog](catalog.md): every page with type, description, tags and trust (generated).
 - [Conventions](conventions.md): page format, front matter, verification and trust, figures, diagrams, linking.
 - [log.md](log.md): changes to the knowledge base, newest first.
 - [sources/](sources/index.md): inbox for raw files to ingest (not committed), tracked in

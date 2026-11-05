@@ -75,4 +75,9 @@ def scaffold(target: Path, *, project: str, actor: str, dry_run: bool = False) -
         destination.write_bytes(data)
         if relative in EXECUTABLE:
             os.chmod(destination, 0o755)
+    if not dry_run and "docs/catalog.md" in result["created"]:
+        from .catalog import write
+        from .common import Repo
+
+        write(Repo(target))
     return result

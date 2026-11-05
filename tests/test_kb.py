@@ -254,3 +254,37 @@ def test_work_index_staleness_is_reported(tmp_path):
     work.write_index(repo)
     _, warnings = run_checks(repo)
     assert not any("roadmap is out of date" in w for w in warnings)
+
+
+def test_catalog_generated_filtered_and_kept_fresh(tmp_path):
+    import json as _json
+
+    from kbtools import catalog, work
+    from kbtools.common import Repo
+    from kbtools.scaffold import scaffold
+
+    (tmp_path / ".git").mkdir()
+    scaffold(tmp_path, project="Acme", actor="t")
+    repo = Repo(tmp_path)
+    text = (repo.docs / "catalog.md").read_text()
+    assert "## process/" in text and "[Agent workflow](process/agent-workflow.md)" in text
+    assert "catalog.md)" not in text.split(catalog.START, 1)[1]  # the catalog does not list itself
+    errors, warnings = run_checks(repo)
+    assert errors == [] and warnings == [], errors + warnings
+
+    work.new_epic(repo, "Reporting", by="t")  # work commands refresh the catalog
+    assert "0001 Reporting" in (repo.docs / "catalog.md").read_text()
+    assert not catalog.is_stale(repo)
+
+    page = repo.docs / "domains" / "orders.md"
+    page.write_text('---\ntype: Domain Concept\ntitle: Orders\ndescription: Order lifecycle.\ntags: [orders]\n'
+                    "verified:\n  - {by: 'human:x', at: 2026-01-02T00:00:00Z}\n---\n\nText.\n")
+    _, warnings = run_checks(repo)
+    assert any("catalog.md is out of date" in w for w in warnings)
+    rows = catalog.select(catalog.records(repo), tier="human")
+    assert [r["path"] for r in rows] == ["domains/orders.md"]
+    line = catalog.render(catalog.select(catalog.records(repo), text="order lifecycle"), "jsonl").splitlines()
+    assert _json.loads(line[0])["tags"] == ["orders"] and len(line) == 1
+    assert [r["id"] for r in catalog.select(catalog.records(repo), type_="Epic")] == ["0001"]
+    catalog.write(repo)
+    assert "human 2026-01-02" in (repo.docs / "catalog.md").read_text()
