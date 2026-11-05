@@ -15,12 +15,14 @@ generated:
 
 | Path | Purpose |
 | --- | --- |
+| `apps/<app>/src/`, `apps/<app>/tests/` | Each application's code and its tests ([Testing](testing.md)) |
+| `tests/` | Cross-app tests: end-to-end, contract, smoke |
 | `docs/` | Knowledge base (this bundle) |
 | `data/` | Structured research data ([Research data](../architecture/research-data.md)) |
 | `tools/` | Scripts for agents and people ([tools/README.md](../../tools/README.md)) |
 | `extracted/` | Working extraction output (git-ignored) |
 
-> TODO: Add the code layout once decided (record it in an [ADR](../architecture/decisions/index.md)).
+> TODO: Confirm the code layout, or replace the default above, in an [ADR](../architecture/decisions/index.md).
 
 ## Branches and pull requests
 
@@ -35,9 +37,9 @@ generated:
 
 > TODO: Commit message style, review requirements, merge strategy.
 
-## Testing
+## Testing and security
 
-> TODO: Test strategy and how to run the tests.
+Every change follows [Testing](testing.md) and [Security](security.md).
 
 ## Coding standards
 

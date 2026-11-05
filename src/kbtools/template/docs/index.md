@@ -25,8 +25,9 @@ bundle that travels with the repository.
 | [business/](business/index.md) | Vision, branding, users and customers, business model and rules |
 | [domains/](domains/index.md) | Sub-wikis of domain knowledge by topic, and the glossary |
 | [environments/](environments/index.md) | Where the project runs: local development and deployment targets |
-| [process/](process/index.md) | Agent workflow, development, project management, work tracking, operations, ingestion, knowledge-base maintenance |
+| [process/](process/index.md) | Agent workflow, development, testing, security, project management, work tracking, release notes, operations, ingestion, knowledge-base maintenance |
 | [work/](work/index.md) | Epics, implementation plans and work items, with the roadmap |
+| [releases/](releases/index.md) | Release notes: unreleased changes, each release, and where it is deployed |
 
 ## About this bundle
 

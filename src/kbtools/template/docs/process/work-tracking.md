@@ -89,8 +89,11 @@ roadmap is current.
 2. **Plan:** write `plan.md`, create the items, and set the epic to `planned`. A plan that
    changes architecture gets an ADR.
 3. **Deliver:** for each item, branch `NNNN-NN-slug`, then open a pull request titled
-   `[NNNN-NN] Title` that changes the code, the item file (`work_status: done`, acceptance
-   criteria ticked) and any affected knowledge pages, in one pull request.
+   `[NNNN-NN] Title`. In that one pull request, change:
+   - the code and its tests ([Testing](testing.md));
+   - the item file (`work_status: done`, acceptance criteria ticked);
+   - any affected knowledge pages;
+   - a line in [Unreleased](../releases/unreleased.md) ([Release notes](release-notes.md)).
 4. **Close:** when every item is `done` or `cancelled`, set the epic to `done` and record
    what was learned (an ADR, or an update to the relevant pages).
 

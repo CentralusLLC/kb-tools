@@ -90,6 +90,7 @@ list is the project's vocabulary. Add new types here before using them.
 | `Work Item` | A story or task within an epic (`work/epics/NNNN-*/items/NN-*.md`) |
 | `Template` | Page templates in `references/templates/` |
 | `Catalog` | The generated page list (`catalog.md`) |
+| `Release Notes` | One release (`releases/vX.Y.Z.md`) or `releases/unreleased.md` |
 
 ## Verification and trust
 

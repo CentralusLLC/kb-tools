@@ -40,7 +40,8 @@ It installs:
 | `docs/business/` | Vision, audience, branding, business model and rules |
 | `docs/domains/` | Glossary, plus how to add topic sub-wikis |
 | `docs/environments/` | Local development, cloud and hosted environments |
-| `docs/process/` | Agent workflow (rules, precedence, trust), development, project management, work tracking, operations, ingestion, knowledge-base maintenance |
+| `docs/process/` | Agent workflow (rules, precedence, trust), development, testing, security, project management, work tracking, release notes, operations, ingestion, knowledge-base maintenance |
+| `docs/releases/` | Release notes: `unreleased.md` (filled as items complete) and one page per release with a deployments table |
 | `docs/work/` | Roadmap (`index.md`, generated), `trackers.yaml` for GitHub, Jira and Paperclip, and `epics/` |
 | `docs/references/templates/` | Concept, decision and diagram templates |
 | `docs/sources/` | Git-ignored intake folder with its index and `ingest-log.csv` |

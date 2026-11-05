@@ -15,11 +15,15 @@ generated:
 
 ## Releases
 
-> TODO: Versioning, release checklist, release notes.
+Versioning, release notes and the record of what is deployed where:
+[Release notes](release-notes.md) and [releases/](../releases/index.md).
+
+> TODO: Release checklist (beyond release notes).
 
 ## Deployments
 
-> TODO: How each environment is deployed, by whom or what, and how to roll back.
+> TODO: How each environment is deployed, by whom or what, and how to roll back. Every
+> deployment adds a row to the release's Deployments table ([Release notes](release-notes.md#3-when-a-release-is-deployed)).
 
 ## Monitoring and alerting
 
@@ -31,4 +35,4 @@ generated:
 
 ## Secrets and access
 
-> TODO: Where secrets live and who has access. Never put secrets in this knowledge base.
+See [Security](security.md). Never put secrets in this knowledge base.
