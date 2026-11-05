@@ -32,6 +32,8 @@ Format: `- [NNNN-NN] What changed, in the user's words. (#PR)`.
 
 Example: `- [0007-02] New accounts must verify their email before signing in. (#41)`.
 Internal-only changes (refactoring, tests, tooling) get no entry unless users or operators notice them.
+By [item kind](work-tracking.md#item-kinds): `bug` goes under Fixed, `spike` gets no entry, and
+`chore` gets one only if users or operators notice.
 
 ## 2. When a release is cut
 

@@ -29,6 +29,17 @@ Versioning, release notes and the record of what is deployed where:
 
 > TODO: What is monitored, where alerts go, service levels.
 
+## Rollback and backups
+
+> TODO: How to roll back each deployment, which data is backed up, how often, where, and when
+> a restore was last tested.
+
+## Runbooks
+
+Repeatable operational procedures (deploy, restore, rotate a secret, handle an alert) get one
+page each in `process/runbooks/` (`type: Runbook`): when to use it, prerequisites, numbered steps,
+how to verify, and how to undo.
+
 ## Incidents
 
 > TODO: Severity levels, response steps, post-incident review.

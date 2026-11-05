@@ -23,6 +23,7 @@ from .common import Repo, atomic_write, now_iso, slugify
 EPIC_STATUSES = ("proposed", "planned", "in_progress", "done", "cancelled")
 ITEM_STATUSES = ("backlog", "todo", "in_progress", "in_review", "blocked", "done", "cancelled")
 PRIORITIES = ("critical", "high", "medium", "low")
+ITEM_KINDS = ("story", "task", "bug", "spike", "chore")
 CLOSED = {"done", "cancelled"}
 INDEX_START, INDEX_END = "<!-- kb:work-index:start -->", "<!-- kb:work-index:end -->"
 EPIC_DIR = re.compile(r"^(\d{4})-[a-z0-9-]+$")
@@ -127,6 +128,11 @@ def validate(repo: Repo) -> tuple[list[str], list[str]]:
             item_status = str(item.data.get("work_status", ""))
             if item_status not in ITEM_STATUSES:
                 errors.append(f"{item_where}: work_status must be one of {', '.join(ITEM_STATUSES)}")
+            kind = str(item.data.get("kind", ""))
+            if not kind:
+                warnings.append(f"{item_where}: no kind (one of {', '.join(ITEM_KINDS)})")
+            elif kind not in ITEM_KINDS:
+                errors.append(f"{item_where}: kind must be one of {', '.join(ITEM_KINDS)}")
             if item.id in ids:
                 errors.append(f"{item_where}: duplicate id {item.id}")
             ids[item.id] = item_where
@@ -136,6 +142,8 @@ def validate(repo: Repo) -> tuple[list[str], list[str]]:
                 warnings.append(f"{item_where}: item is {item_status} but its epic is still proposed")
         if status in CLOSED and open_items:
             warnings.append(f"{where}: epic is {status} but items are still open: {', '.join(open_items)}")
+        if status == "done" and _retro_missing(epic.path):
+            warnings.append(f"{where}: epic is done but its Retrospective section is not filled in")
     for epic in epics:
         for item in epic.items:
             for dependency in item.data.get("depends_on") or []:
@@ -145,6 +153,14 @@ def validate(repo: Repo) -> tuple[list[str], list[str]]:
     if epics and index.is_file() and index.read_text(encoding="utf-8") != _with_index(index.read_text(encoding="utf-8"), epics, repo):
         warnings.append("docs/work/index.md roadmap is out of date (run `kb work index`)")
     return errors, warnings
+
+
+def _retro_missing(path: Path) -> bool:
+    text = path.read_text(encoding="utf-8")
+    if "## Retrospective" not in text:
+        return True
+    section = text.split("## Retrospective", 1)[1].split("\n## ", 1)[0]
+    return "TODO" in section
 
 
 # ---------------------------------------------------------------- rendering
@@ -187,8 +203,10 @@ def write_index(repo: Repo) -> Path:
 def listing(repo: Repo, status: str | None = None, open_only: bool = False) -> str:
     epics, _ = load(repo)
     rows = ["| ID | Kind | Title | Status | Depends on | Path |", "| --- | --- | --- | --- | --- | --- |"]
+    # Kind is "epic" for epics and the item's kind (story, bug, spike, ...) for items.
     for epic in epics:
-        entries = [("epic", epic.id, epic.data, epic.path)] + [("item", i.id, i.data, i.path) for i in epic.items]
+        entries = [("epic", epic.id, epic.data, epic.path)] + \
+            [(str(i.data.get("kind", "item")), i.id, i.data, i.path) for i in epic.items]
         for kind, ident, data, path in entries:
             current = str(data.get("work_status", ""))
             if status and current != status:
@@ -243,6 +261,16 @@ def new_epic(repo: Repo, title: str, *, by: str, priority: str = "medium", statu
 
 > TODO: What is deliberately excluded.
 
+## Acceptance
+
+> TODO: Who accepts the outcome (see stakeholders in project management), and how
+> (demo, review of success measures). Record the acceptance here when the epic closes.
+
+## Retrospective
+
+> TODO (fill in when the epic closes): what worked, what didn't, and actions. Each action
+> becomes a work item, a change to a process page, or an ADR.
+
 ## Related
 
 - Plan: [plan.md](plan.md)
@@ -284,7 +312,9 @@ Items live in [items/](items/), one file each. Create them with
 
 
 def new_item(repo: Repo, epic_id: str, title: str, *, by: str, priority: str = "medium",
-             status: str = "todo", depends_on: list[str] | None = None) -> Path:
+             status: str = "todo", depends_on: list[str] | None = None, kind: str = "story") -> Path:
+    if kind not in ITEM_KINDS:
+        raise SystemExit(f"kb: kind must be one of {', '.join(ITEM_KINDS)}")
     if status not in ITEM_STATUSES:
         raise SystemExit(f"kb: status must be one of {', '.join(ITEM_STATUSES)}")
     epics, _ = load(repo)
@@ -298,7 +328,7 @@ def new_item(repo: Repo, epic_id: str, title: str, *, by: str, priority: str = "
     text = _front([
         ("type", "Work Item"), ("id", f'"{ident}"'), ("epic", f'"{epic.number}"'), ("title", _quote(title)),
         ("description", _quote(f"TODO: one sentence on what {ident} delivers.")),
-        ("tags", "[work-item]"), ("status", "draft"), ("work_status", status), ("priority", priority),
+        ("tags", "[work-item]"), ("status", "draft"), ("kind", kind), ("work_status", status), ("priority", priority),
         ("depends_on", depends), ("links", "\n  github: \"\"\n  jira: \"\"\n  paperclip: \"\""),
         ("generated", f"\n  by: {by}\n  at: {now_iso()}"),
     ]) + f"""
@@ -308,16 +338,26 @@ Part of [epic {epic.number}](../epic.md) ([plan](../plan.md)).
 
 ## What and why
 
-> TODO: The change, and the user or business value it delivers.
+> TODO: @@WHAT@@
 
 ## Acceptance criteria
 
-- [ ] TODO
+- [ ] @@ACCEPT@@
 
 ## Notes
 
 > TODO: Design notes, constraints, links. Record decisions that outlive this item as ADRs.
 """
+    guidance = {
+        "story": ("The change, and the user or business value it delivers.", "TODO"),
+        "task": ("The work, and why it is needed.", "TODO"),
+        "bug": ("What happens, what should happen, and how to reproduce it.",
+                "A test reproduces the bug and now passes"),
+        "spike": ("The question to answer, and the time box.",
+                  "Question answered in a research page or ADR (link it here)"),
+        "chore": ("The maintenance work, and why now.", "TODO"),
+    }[kind]
+    text = text.replace("@@WHAT@@", guidance[0]).replace("@@ACCEPT@@", guidance[1])
     atomic_write(path, text)
     _refresh(repo)
     return path

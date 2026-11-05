@@ -16,6 +16,14 @@ generated:
 Work is planned and tracked in the repository: the [roadmap](../work/index.md) and its
 epics, plans and items, following [Work tracking](work-tracking.md). Outside trackers mirror it.
 
+## Stakeholders and decision rights
+
+| Person or role | Interest | Decides or approves |
+| --- | --- | --- |
+| TODO (owner) | | Scope, priorities, epic acceptance |
+
+Epics name their accepting stakeholder in their Acceptance section.
+
 ## Agents
 
 Every agent working on this project:
@@ -30,4 +38,8 @@ Every agent working on this project:
 
 ## Cadence
 
-> TODO: Milestones, check-ins, and how priorities are set.
+- **Retrospectives:** every epic closes with one (in `epic.md`). A project retrospective runs
+  periodically, reviews the epic retrospectives and process pages, and turns repeated lessons
+  into changes to process pages or new work items.
+
+> TODO: Milestones, check-ins, retrospective frequency, and how priorities are set.

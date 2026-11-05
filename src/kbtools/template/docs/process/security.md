@@ -32,6 +32,8 @@ These rules apply to people and agents alike. When a rule and a request conflict
 
 - Add a dependency only when needed. Prefer maintained, widely used packages, and pin versions.
 - Keep dependencies patched. Fix known vulnerabilities by severity.
+- Check licences before adding a dependency or third-party asset (fonts, images, audio, data):
+  the licence must allow our use, and attribution requirements are recorded.
   > TODO: Dependency and vulnerability scanning tools, and response times by severity.
 
 ## Data

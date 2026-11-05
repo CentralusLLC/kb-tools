@@ -23,10 +23,12 @@ bundle that travels with the repository.
 | --- | --- |
 | [architecture/](architecture/index.md) | System architecture, structured research data, and architecture decision records |
 | [business/](business/index.md) | Vision, branding, users and customers, business model and rules |
+| [design/](design/index.md) | User flows, screens and the design system |
 | [domains/](domains/index.md) | Sub-wikis of domain knowledge by topic, and the glossary |
 | [environments/](environments/index.md) | Where the project runs: local development and deployment targets |
 | [process/](process/index.md) | Agent workflow, development, testing, security, project management, work tracking, release notes, operations, ingestion, knowledge-base maintenance |
 | [work/](work/index.md) | Epics, implementation plans and work items, with the roadmap |
+| [user/](user/index.md) | User-facing documentation: guides, how-tos, reference |
 | [releases/](releases/index.md) | Release notes: unreleased changes, each release, and where it is deployed |
 
 ## About this bundle

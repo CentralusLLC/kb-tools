@@ -98,5 +98,6 @@ When asked to ingest files, or when you find `pending` rows in
   agent memory if you have one.
 - When code changes how something works or runs, update the matching page in the same
   pull request, and run `tools/kb check`.
-- When you complete a work item, add its line to [Unreleased](../releases/unreleased.md).
+- When you complete a work item, meet the [definition of done](work-tracking.md#definition-of-done),
+  including its line in [Unreleased](../releases/unreleased.md).
 - Never add `verified` entries for your own work, and never add `human:` entries.

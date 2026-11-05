@@ -34,12 +34,14 @@ It installs:
 
 | Path | Contents |
 | --- | --- |
-| `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` | Agent entry points that point into `docs/` (existing files are kept; the command prints a snippet to add) |
+| `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/pull_request_template.md` | Agent entry points that point into `docs/` (existing files are kept; the command prints a snippet to add) |
 | `docs/index.md`, `catalog.md`, `log.md`, `conventions.md` | OKF v0.2 bundle root, change log, conventions (verification and trust, figures, diagrams) |
-| `docs/architecture/` | System overview, research-data conventions, decisions with ADR 0001 (adopting the knowledge base) |
+| `docs/architecture/` | System overview, quality attributes (non-functional requirements), research-data conventions, decisions with ADR 0001 (adopting the knowledge base) |
+| `docs/design/` | User flows, screens and the design system |
+| `docs/user/` | User-facing documentation (publishable on its own) |
 | `docs/business/` | Vision, audience, branding, business model and rules |
 | `docs/domains/` | Glossary, plus how to add topic sub-wikis |
-| `docs/environments/` | Local development, cloud and hosted environments |
+| `docs/environments/` | Local development, configuration reference, cloud and hosted environments |
 | `docs/process/` | Agent workflow (rules, precedence, trust), development, testing, security, project management, work tracking, release notes, operations, ingestion, knowledge-base maintenance |
 | `docs/releases/` | Release notes: `unreleased.md` (filled as items complete) and one page per release with a deployments table |
 | `docs/work/` | Roadmap (`index.md`, generated), `trackers.yaml` for GitHub, Jira and Paperclip, and `epics/` |
@@ -80,7 +82,7 @@ tools/kb report                                 # verification level and age per
 | `extract` | Builds `extracted/<slug>/` for a source; see the table below. Moves the log row to `extracted`. |
 | `figure` | Crops or resizes a render or embedded image into `docs/`. Prints a Markdown snippet with alt text, a caption, the source, and an element table to fill in. |
 | `log` | Updates one ingest-log row safely (status, outputs, notes, rehash). |
-| `work new-epic` / `new-item` / `set` / `list` / `index` | Repository-native work tracking in `docs/work/`: epics (`NNNN`) with `epic.md` and `plan.md`, items (`NNNN-NN`) in `items/`, `work_status` per epic and item, and a generated roadmap. See the template's `docs/process/work-tracking.md`. |
+| `work new-epic` / `new-item` / `set` / `list` / `index` | Repository-native work tracking in `docs/work/`: epics (`NNNN`) with `epic.md` (including acceptance and retrospective) and `plan.md`, items (`NNNN-NN`, `kind` story/task/bug/spike/chore) in `items/`, `work_status` per epic and item, and a generated roadmap. See the template's `docs/process/work-tracking.md`. |
 | `catalog` | One record per page: path, section, type, title, description, tags, status, `work_status`, trust tier, last verification. `--write` regenerates the committed `docs/catalog.md` (Markdown grouped by section; only fields that change with the pages, so it never drifts on its own). Filters (`--type`, `--section`, `--tag`, `--tier`, `--status`, `--work-status`, `--text`) print `md`, `json` or `jsonl` on demand, so no JSON copy is stored and `jq` is optional. |
 | `check` | Checks the ingest log (statuses, hashes, outputs), OKF front matter, links, images (alt text), that every Mermaid diagram is followed by an element list or table, the work tree (IDs, statuses, dependencies, roadmap freshness), and catalog freshness. Exits non-zero on errors. |
 | `report` | Gives each page a trust tier (human, machine or unverified), its last verification, its age, and flags (`changed-since-verified`, `stale`, `verification-old`, `deprecated`). |

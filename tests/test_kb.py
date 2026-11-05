@@ -288,3 +288,36 @@ def test_catalog_generated_filtered_and_kept_fresh(tmp_path):
     assert [r["id"] for r in catalog.select(catalog.records(repo), type_="Epic")] == ["0001"]
     catalog.write(repo)
     assert "human 2026-01-02" in (repo.docs / "catalog.md").read_text()
+
+
+def test_work_kinds_and_retrospective(tmp_path):
+    import pytest
+
+    from kbtools import work
+    from kbtools.common import Repo
+    from kbtools.scaffold import scaffold
+
+    (tmp_path / ".git").mkdir()
+    scaffold(tmp_path, project="Acme", actor="t")
+    repo = Repo(tmp_path)
+    epic = work.new_epic(repo, "Checkout", by="t")
+    bug = work.new_item(repo, "0001", "Total is wrong", by="t", kind="bug")
+    assert "kind: bug" in bug.read_text() and "A test reproduces the bug" in bug.read_text()
+    spike = work.new_item(repo, "0001", "Compare payment providers", by="t", kind="spike")
+    assert "Question answered" in spike.read_text()
+    with pytest.raises(SystemExit):
+        work.new_item(repo, "0001", "x", by="t", kind="epic")
+    assert "| 0001-01 | bug |" in work.listing(repo)
+    for ident in ("0001-01", "0001-02"):
+        work.set_status(repo, ident, "done")
+    work.set_status(repo, "0001", "done")
+    _, warnings = run_checks(repo)
+    assert any("Retrospective section is not filled in" in w for w in warnings)
+    text = (epic / "epic.md").read_text()
+    retro = text.split("## Retrospective", 1)[1].split("\n## ", 1)[0]
+    (epic / "epic.md").write_text(text.replace(retro, "\n\nWorked: small items. Action: 0002 covers refunds.\n\n"))
+    _, warnings = run_checks(repo)
+    assert not any("Retrospective" in w for w in warnings)
+    bug.write_text(bug.read_text().replace("kind: bug", "kind: defect"))
+    errors, _ = run_checks(repo)
+    assert any("kind must be one of" in e for e in errors)

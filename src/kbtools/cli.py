@@ -134,7 +134,7 @@ def cmd_work(args) -> int:
         print(f"created {repo.rel(folder)}/epic.md and plan.md")
     elif args.work_command == "new-item":
         path = work.new_item(repo, args.epic, args.title, by=args.by, priority=args.priority,
-                             status=args.status, depends_on=args.depends_on or [])
+                             status=args.status, depends_on=args.depends_on or [], kind=args.kind)
         print(f"created {repo.rel(path)}")
     elif args.work_command == "set":
         print(f"updated {repo.rel(work.set_status(repo, args.id, args.status))}")
@@ -249,6 +249,7 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_argument("--priority", default="medium", choices=["critical", "high", "medium", "low"])
     w.add_argument("--status", default="todo", help="backlog|todo|in_progress|in_review|blocked|done|cancelled")
     w.add_argument("--depends-on", action="append", help="item id this depends on (repeatable)")
+    w.add_argument("--kind", default="story", choices=["story", "task", "bug", "spike", "chore"])
     w = work_sub.add_parser("set", help="set work_status of an epic or item")
     w.add_argument("id", help="epic id (0007) or item id (0007-02)")
     w.add_argument("status")

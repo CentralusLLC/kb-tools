@@ -138,10 +138,10 @@ def build_server(host: str = "0.0.0.0", port: int = 8765):
         return _run(repo, "work", "new-epic", title, "--by", by, "--priority", priority, "--status", status)
 
     @mcp.tool(annotations=write)
-    def kb_work_new_item(repo: str, epic: str, title: str, by: str, priority: str = "medium",
+    def kb_work_new_item(repo: str, epic: str, title: str, by: str, kind: str = "story", priority: str = "medium",
                          status: str = "todo", depends_on: list[str] | None = None) -> str:
-        """Create a work item (story/task) file in an epic's items/ folder; ids are NNNN-NN."""
-        args = ["work", "new-item", epic, title, "--by", by, "--priority", priority, "--status", status]
+        """Create a work item in an epic's items/ folder (ids NNNN-NN). kind: story|task|bug|spike|chore."""
+        args = ["work", "new-item", epic, title, "--by", by, "--kind", kind, "--priority", priority, "--status", status]
         for dependency in depends_on or []:
             args += ["--depends-on", dependency]
         return _run(repo, *args)

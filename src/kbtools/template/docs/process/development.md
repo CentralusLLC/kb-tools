@@ -13,16 +13,28 @@ generated:
 
 ## Repository layout
 
+Code follows one of two common layouts. Choose one in an ADR:
+
+- **One deployable app:** `src/` for code and `tests/` for its tests.
+- **Several apps (monorepo):** `apps/<app>/src/` and `apps/<app>/tests/` per app,
+  `packages/<pkg>/` for shared code, and a top-level `tests/` for cross-app tests.
+
 | Path | Purpose |
 | --- | --- |
-| `apps/<app>/src/`, `apps/<app>/tests/` | Each application's code and its tests ([Testing](testing.md)) |
-| `tests/` | Cross-app tests: end-to-end, contract, smoke |
-| `docs/` | Knowledge base (this bundle) |
+| `src/` + `tests/`, or `apps/` + `packages/` + `tests/` | Code and tests ([Testing](testing.md)) |
+| `docs/` | Knowledge base (this bundle), including user documentation in `docs/user/` |
 | `data/` | Structured research data ([Research data](../architecture/research-data.md)) |
 | `tools/` | Scripts for agents and people ([tools/README.md](../../tools/README.md)) |
 | `extracted/` | Working extraction output (git-ignored) |
 
-> TODO: Confirm the code layout, or replace the default above, in an [ADR](../architecture/decisions/index.md).
+> TODO: Record the chosen layout in an [ADR](../architecture/decisions/index.md).
+
+## Documentation
+
+- Internal knowledge (how the system works, why, how we work) goes in the knowledge base.
+- **User-facing documentation** (guides, how-tos, reference) goes in [`docs/user/`](../user/index.md),
+  and is updated in the same pull request as the change users will notice.
+- API reference generated from code is published from the code. Link to it from `docs/user/`.
 
 ## Branches and pull requests
 
@@ -35,7 +47,17 @@ generated:
   (`work_status`, acceptance criteria) and closes tracker issues (`Closes #41`).
   See [Work tracking](work-tracking.md#lifecycle).
 
-> TODO: Commit message style, review requirements, merge strategy.
+- Every pull request meets the [definition of done](work-tracking.md#definition-of-done).
+  The pull request template repeats it as a checklist.
+
+## Code review
+
+- Reviewers check the definition of done, readability, test quality, security
+  ([Security](security.md)), and whether the knowledge base and user docs match the change.
+- An agent may review another agent's pull request. Changes to authentication, authorisation,
+  cryptography, payments or data deletion need a human reviewer.
+
+> TODO: Commit message style, required approvals, merge strategy.
 
 ## Testing and security
 

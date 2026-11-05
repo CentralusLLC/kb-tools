@@ -13,14 +13,15 @@ generated:
 
 ## Where tests live
 
-Each application keeps its tests next to its code:
+Tests sit next to the code they test, in the project's chosen layout
+([Development](development.md#repository-layout)):
 
 ```
-apps/
-  <app>/
-    src/            application code
-    tests/          tests for this app (unit, integration)
-tests/              cross-app tests only: end-to-end, contract, smoke
+One app:                         Several apps:
+src/          code               apps/<app>/src/      each app's code
+tests/        its tests          apps/<app>/tests/    each app's tests
+                                 packages/<pkg>/      shared code (with its own tests/)
+                                 tests/               cross-app: end-to-end, contract, smoke
 ```
 
 > TODO: Confirm or change this layout with an [ADR](../architecture/decisions/index.md),

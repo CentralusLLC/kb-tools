@@ -56,6 +56,7 @@ def records(repo: Repo) -> list[dict]:
             "tags": [str(t) for t in tags] if isinstance(tags, list) else [str(tags)],
             "status": str(data.get("status", "stable")),
             "work_status": str(data.get("work_status", "")),
+            "kind": str(data.get("kind", "")),
             "id": str(data.get("id", "")),
             "tier": row.get("tier", "unverified"),
             "last_verified": row.get("last_verified", ""),

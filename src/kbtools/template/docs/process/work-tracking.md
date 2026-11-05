@@ -58,6 +58,7 @@ type: Work Item
 id: "0007-02"
 epic: "0007"
 title: "Email verification"
+kind: story               # story | task | bug | spike | chore
 work_status: todo
 priority: high            # critical | high | medium | low
 depends_on: ["0007-01"]
@@ -67,13 +68,44 @@ links:                    # external copies, filled in by sync (or by hand)
   paperclip: PRJ-23
 ```
 
+## Item kinds
+
+Every item has a `kind`:
+
+| Kind | Use for | Notes |
+| --- | --- | --- |
+| `story` | A user-visible capability | Acceptance criteria in the user's terms |
+| `task` | Technical work that enables stories | |
+| `bug` | Behaviour that differs from what it should be | Starts with a failing test; release note goes under Fixed |
+| `spike` | A time-boxed question (research, prototype, comparison) | Done when the question is answered in a research page or ADR, linked from the item; no release note |
+| `chore` | Maintenance: upgrades, clean-up, tooling | Release note only if users or operators notice |
+
+## Definition of done
+
+**An item is done** when its pull request has:
+
+- [ ] acceptance criteria met and ticked, and `work_status: done`
+- [ ] tests added or updated, and run, with the result reported ([Testing](testing.md))
+- [ ] the security rules followed ([Security](security.md))
+- [ ] knowledge base pages updated where behaviour, setup or rules changed; `tools/kb check` passes
+- [ ] user docs updated if users will notice ([User documentation](../user/index.md))
+- [ ] a line in [Unreleased](../releases/unreleased.md), unless its kind needs none
+
+**An epic is done** when:
+
+- [ ] every item is `done` or `cancelled`;
+- [ ] its success measures are checked, and the outcome is accepted by the stakeholder
+  named in the epic (its Acceptance section);
+- [ ] its Retrospective section is filled in, with each action turned into a work item,
+  a process-page change or an ADR.
+
 ## Commands
 
 Use `tools/kb work` (or the `kb_work_*` MCP tools) rather than creating files by hand:
 
 ```sh
 tools/kb work new-epic "Self-serve onboarding" --by <you> --priority high
-tools/kb work new-item 0007 "Email verification" --by <you> --depends-on 0007-01
+tools/kb work new-item 0007 "Email verification" --by <you> --kind story --depends-on 0007-01
 tools/kb work set 0007-02 in_progress
 tools/kb work list --open
 tools/kb work index          # regenerate the roadmap (new-epic, new-item and set do it too)
@@ -94,8 +126,10 @@ roadmap is current.
    - the item file (`work_status: done`, acceptance criteria ticked);
    - any affected knowledge pages;
    - a line in [Unreleased](../releases/unreleased.md) ([Release notes](release-notes.md)).
-4. **Close:** when every item is `done` or `cancelled`, set the epic to `done` and record
-   what was learned (an ADR, or an update to the relevant pages).
+4. **Close:** when every item is `done` or `cancelled`, check the success measures, record the
+   stakeholder's acceptance and the retrospective in `epic.md`, act on the retrospective, and set
+   the epic to `done` ([definition of done](#definition-of-done)). `kb check` warns about a done
+   epic with no retrospective.
 
 ## Outside trackers
 

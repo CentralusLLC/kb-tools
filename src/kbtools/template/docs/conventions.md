@@ -90,6 +90,9 @@ list is the project's vocabulary. Add new types here before using them.
 | `Work Item` | A story or task within an epic (`work/epics/NNNN-*/items/NN-*.md`) |
 | `Template` | Page templates in `references/templates/` |
 | `Catalog` | The generated page list (`catalog.md`) |
+| `Design` | User flows, screens and the design system (`design/`) |
+| `User Guide` | User-facing documentation (`user/`) |
+| `Runbook` | A repeatable operational procedure (`process/runbooks/`) |
 | `Release Notes` | One release (`releases/vX.Y.Z.md`) or `releases/unreleased.md` |
 
 ## Verification and trust
