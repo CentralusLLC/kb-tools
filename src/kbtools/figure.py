@@ -48,6 +48,8 @@ def make_figure(
     out = out if out.is_absolute() else repo.root / out
     if not image.is_file():
         raise SystemExit(f"kb: {image} not found")
+    if not image.resolve().is_relative_to(repo.root.resolve()):
+        raise SystemExit("kb: the image must be inside the repository (a render, media file or docs asset)")
     if not out.resolve().is_relative_to(repo.docs.resolve()):
         raise SystemExit("kb: figures must be saved inside docs/ (for example next to the page in an assets/ folder)")
     if out.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp"}:

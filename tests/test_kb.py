@@ -100,8 +100,17 @@ def test_extract_image_without_soffice(repo):
     assert (repo.root / result["package"] / "review.md").exists()
 
 
-def test_figure_crops_into_docs_with_snippet(repo, tmp_path):
-    render_png = make_png(tmp_path / "page-001.png", size=(1000, 500))
+def test_figure_rejects_images_outside_repo(repo, tmp_path_factory):
+    import pytest
+
+    outside = make_png(tmp_path_factory.mktemp("elsewhere") / "x.png")
+    with pytest.raises(SystemExit):
+        make_figure(repo, outside, repo.docs / "assets" / "x.png")
+
+
+def test_figure_crops_into_docs_with_snippet(repo):
+    (repo.extracted / "pkg" / "renders").mkdir(parents=True)
+    render_png = make_png(repo.extracted / "pkg" / "renders" / "page-001.png", size=(1000, 500))
     snippet = make_figure(repo, render_png, repo.docs / "world" / "assets" / "layers.png",
                           crop="0.25,0.25,0.75,0.75", page=repo.docs / "world" / "model.md",
                           alt="Board layers", caption="How boards nest", source_ref="docs/sources/deck.pptx, slide 2")
