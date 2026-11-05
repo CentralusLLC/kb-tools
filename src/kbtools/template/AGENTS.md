@@ -1,0 +1,37 @@
+# AGENTS.md
+
+Instructions for AI coding agents (Claude Code, Codex, Copilot, agent-platform agents and
+others) working in {{PROJECT}}.
+
+## Read the knowledge base first
+
+This project's rules and context live in its knowledge base, `docs/`, an Open Knowledge
+Format (OKF) bundle. Before starting any task:
+
+1. Read [`docs/index.md`](docs/index.md).
+2. Read and follow [`docs/process/agent-workflow.md`](docs/process/agent-workflow.md).
+3. Read the section pages that match your task (architecture, business, domains,
+   environments, process), not the whole bundle.
+
+When you report back, say which `docs/` pages you relied on.
+
+## Rules that always apply
+
+- **Ask before you build.** Ask before choosing code locations, languages, runtimes or build
+  tools, before creating top-level projects or configuration, and before adding assets or
+  binaries. When information is missing, stop and ask.
+- **Branch and open a pull request** unless told otherwise.
+- **Keep the knowledge base current.** When a change alters behaviour, setup or rules,
+  update the matching `docs/` page in the same pull request, and run `tools/kb check`.
+- **Weigh pages by trust.** Verification is optional and never blocks work, but its level
+  and age tell you how much to rely on a page (`tools/kb report`). Never add `verified`
+  entries for your own work, and never add `human:` entries.
+- **Use the tools.** Ingest documents with `tools/kb` (or the `kb_*` MCP tools), not one-off
+  scripts. Capture key graphics as figures, and follow every diagram with node and edge tables.
+
+## Quick reference
+
+- Ingestion: [`docs/process/ingestion.md`](docs/process/ingestion.md)
+- Knowledge base conventions: [`docs/conventions.md`](docs/conventions.md)
+- Domain terms: [`docs/domains/glossary.md`](docs/domains/glossary.md)
+- Local setup: [`docs/environments/local.md`](docs/environments/local.md)

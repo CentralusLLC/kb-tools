@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+# kb: run kb-tools in Docker against the current repository.
+# Copy this file into a project as tools/kb (it finds the repository root itself).
+#
+#   tools/kb inventory --by human:<name>
+#   tools/kb extract --pending
+#
+# KB_TOOLS_IMAGE overrides the image (default: kb-tools:latest).
+set -eu
+IMAGE="${KB_TOOLS_IMAGE:-kb-tools:latest}"
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+REL="$(cd "$(pwd)" && pwd | sed "s#^$ROOT##")"
+
+if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+  echo "kb: Docker image $IMAGE not found. Build it from the kb-tools repository:" >&2
+  echo "    git clone <kb-tools repo> && docker build -t kb-tools:latest kb-tools" >&2
+  exit 1
+fi
+
+TTY=""
+[ -t 1 ] && TTY="-t"
+exec docker run --rm -i $TTY \
+  -u "$(id -u):$(id -g)" \
+  -v "$ROOT:/work" -w "/work$REL" \
+  --network none \
+  "$IMAGE" "$@"

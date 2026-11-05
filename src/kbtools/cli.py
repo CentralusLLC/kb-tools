@@ -15,6 +15,38 @@ def _repo(args) -> Repo:
     return find_repo(Path(args.repo) if args.repo else None)
 
 
+def cmd_scaffold(args) -> int:
+    import subprocess
+
+    from .scaffold import POINTER_SNIPPET, scaffold
+
+    if args.repo:
+        target = Path(args.repo).resolve()
+    else:
+        try:
+            top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+            target = Path(top.stdout.strip()) if top.returncode == 0 and top.stdout.strip() else Path.cwd()
+        except OSError:  # no git in the container: the wrapper starts us at the repository root
+            target = Path.cwd()
+    if not (target / ".git").exists():
+        print(f"note: {target} is not a git repository root; scaffolding there anyway")
+    result = scaffold(target, project=args.project, actor=args.by, dry_run=args.dry_run)
+    verb = "would create" if args.dry_run else "created"
+    for path in result["created"]:
+        print(f"{verb} {path}")
+    for path in result["skipped"]:
+        print(f"exists, kept {path}")
+    print(f"{len(result['created'])} {verb.split()[-1]}, {len(result['skipped'])} kept")
+    kept_pointers = [p for p in ("AGENTS.md", "CLAUDE.md", ".github/copilot-instructions.md") if p in result["skipped"]]
+    if kept_pointers:
+        print("\nThese agent files already existed and were not changed: " + ", ".join(kept_pointers))
+        print("Add a pointer to the knowledge base in each, for example:\n\n" + POINTER_SNIPPET)
+    if not args.dry_run:
+        print("Next: fill in the TODOs (start with docs/business/vision.md and docs/architecture/overview.md), "
+              "then run `tools/kb check`.")
+    return 0
+
+
 def cmd_init(args) -> int:
     from .intake import init
 
@@ -124,6 +156,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"kb-tools {__version__}")
     parser.add_argument("--repo", help="repository root (default: found from the current directory)")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("scaffold", help="install the generic knowledge-base layout (docs/, AGENTS.md, tools/kb, ...) without overwriting")
+    p.add_argument("--project", required=True, help="project name used in the pages")
+    p.add_argument("--by", default=f"kb-tools/{__version__}", help="actor recorded in generated: (default kb-tools/<version>)")
+    p.add_argument("--dry-run", action="store_true", help="list what would be created")
+    p.set_defaults(func=cmd_scaffold)
 
     p = sub.add_parser("init", help="scaffold docs/sources (git-ignored), the ingest log and extracted/")
     p.set_defaults(func=cmd_init)

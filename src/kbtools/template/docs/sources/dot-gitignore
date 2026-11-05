@@ -1,0 +1,6 @@
+# Source files are working material: keep them out of git.
+# The ingest log records each file's hash and origin so it can be re-fetched.
+*
+!.gitignore
+!index.md
+!ingest-log.csv

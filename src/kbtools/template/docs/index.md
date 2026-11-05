@@ -1,0 +1,38 @@
+---
+okf_version: "0.2"
+---
+
+# {{PROJECT}} knowledge base
+
+This directory is the project's curated knowledge base: the source of truth for
+what {{PROJECT}} is, how it is built, and how work gets done. People and every AI
+agent read it. It is an [Open Knowledge Format (OKF) v0.2](conventions.md#open-knowledge-format)
+bundle that travels with the repository.
+
+## Start here (agents and new contributors)
+
+1. Read [Agent workflow](process/agent-workflow.md): the rules for every task.
+2. Open the section index that matches your task and read the pages it points to.
+   Do not read the whole bundle up front.
+3. When sources disagree, follow [precedence](process/agent-workflow.md#precedence).
+
+## Sections
+
+| Section | What it holds |
+| --- | --- |
+| [architecture/](architecture/index.md) | System architecture, structured research data, and architecture decision records |
+| [business/](business/index.md) | Vision, branding, users and customers, business model and rules |
+| [domains/](domains/index.md) | Sub-wikis of domain knowledge by topic, and the glossary |
+| [environments/](environments/index.md) | Where the project runs: local development and deployment targets |
+| [process/](process/index.md) | Agent workflow, development, project management, operations, ingestion, knowledge-base maintenance |
+
+## About this bundle
+
+- [Conventions](conventions.md): page format, front matter, verification and trust, figures, diagrams, linking.
+- [log.md](log.md): changes to the knowledge base, newest first.
+- [sources/](sources/index.md): inbox for raw files to ingest (not committed), tracked in
+  `sources/ingest-log.csv`. See [Ingestion](process/ingestion.md).
+- Structured research data lives in the repository's `data/` folder ([Research data](architecture/research-data.md)).
+- `tools/kb` runs the shared kb-tools toolkit; extraction output goes to the git-ignored
+  `extracted/` folder ([tools/README.md](../tools/README.md)).
+- `references/templates/` holds page templates.

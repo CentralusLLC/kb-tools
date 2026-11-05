@@ -163,3 +163,42 @@ def test_cli_end_to_end(repo, capsys):
     assert main(["--repo", str(repo.root), "log", "x.png", "--status", "skipped", "--notes", "test"]) == 0
     assert main(["--repo", str(repo.root), "check"]) == 0
     assert "skipped" in capsys.readouterr().out
+
+
+def test_scaffold_installs_clean_generic_bundle(tmp_path):
+    from pathlib import Path
+
+    from kbtools.common import Repo
+    from kbtools.scaffold import scaffold, template_files
+
+    (tmp_path / ".git").mkdir()
+    result = scaffold(tmp_path, project="Acme: Portal", actor="kb-tools/test")
+    assert "docs/index.md" in result["created"] and "docs/sources/.gitignore" in result["created"]
+    assert ".github/copilot-instructions.md" in result["created"] and "extracted/.gitignore" in result["created"]
+    for path in result["created"]:
+        text = (tmp_path / path).read_text(errors="ignore")
+        assert "{{" not in text, path
+    assert "Acme: Portal" in (tmp_path / "docs" / "index.md").read_text()
+    assert (tmp_path / "tools" / "kb").stat().st_mode & 0o111
+    bin_kb = Path(__file__).resolve().parents[1] / "bin" / "kb"
+    if bin_kb.exists():
+        assert (tmp_path / "tools" / "kb").read_bytes() == bin_kb.read_bytes(), "template tools/kb drifted from bin/kb"
+    header = (tmp_path / "docs" / "sources" / "ingest-log.csv").read_text().splitlines()[0]
+    assert header.split(",") == ingest_log.COLUMNS
+    errors, warnings = run_checks(Repo(tmp_path))
+    assert errors == [] and warnings == [], errors + warnings
+    words = ("gameworld", "centralus", "phaser", "creature")
+    for name, node in template_files():
+        text = node.read_bytes().decode("utf-8", "ignore").lower()
+        assert not any(w in text for w in words), name
+
+
+def test_scaffold_never_overwrites(tmp_path):
+    from kbtools.scaffold import scaffold
+
+    (tmp_path / "AGENTS.md").write_text("mine\n")
+    first = scaffold(tmp_path, project="X", actor="t")
+    assert "AGENTS.md" in first["skipped"]
+    assert (tmp_path / "AGENTS.md").read_text() == "mine\n"
+    second = scaffold(tmp_path, project="X", actor="t")
+    assert second["created"] == []

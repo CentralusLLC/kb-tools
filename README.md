@@ -18,6 +18,38 @@ docker build -t kb-tools:latest .            # runtime image
 docker build --target test -t kb-tools:test . # runs the test suite
 ```
 
+## Start a new project
+
+`kb scaffold` installs a generic knowledge-base layout into a repository. It never
+overwrites existing files. Run it once with kb-tools' own wrapper, since the project has
+no `tools/kb` yet:
+
+```sh
+cd <project repository>
+~/workspace/kb-tools/bin/kb scaffold --project "Project Name"   # --dry-run to preview
+tools/kb check
+```
+
+It installs:
+
+| Path | Contents |
+| --- | --- |
+| `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` | Agent entry points that point into `docs/` (existing files are kept; the command prints a snippet to add) |
+| `docs/index.md`, `log.md`, `conventions.md` | OKF v0.2 bundle root, change log, conventions (verification and trust, figures, diagrams) |
+| `docs/architecture/` | System overview, research-data conventions, decisions with ADR 0001 (adopting the knowledge base) |
+| `docs/business/` | Vision, audience, branding, business model and rules |
+| `docs/domains/` | Glossary, plus how to add topic sub-wikis |
+| `docs/environments/` | Local development, cloud and hosted environments |
+| `docs/process/` | Agent workflow (rules, precedence, trust), development, project management, operations, ingestion, knowledge-base maintenance |
+| `docs/references/templates/` | Concept, decision and diagram templates |
+| `docs/sources/` | Git-ignored intake folder with its index and `ingest-log.csv` |
+| `data/`, `tools/` (with `tools/kb`), `extracted/` | Research data, tools, and git-ignored extraction output |
+
+The template is generic, with no project-specific content. It lives in
+`src/kbtools/template/`; files named `dot-*` install as `.*`. Placeholders are `{{PROJECT}}`,
+`{{DATE}}`, `{{NOW}}`, `{{ACTOR}}` and `{{VERSION}}`. A test checks that a scaffolded repository
+passes `kb check` cleanly, and that the template's `tools/kb` matches `bin/kb`.
+
 ## Use from a project
 
 Copy [`bin/kb`](bin/kb) into the project as `tools/kb`. It mounts the repository
@@ -40,6 +72,7 @@ tools/kb report                                 # verification level and age per
 
 | Command | What it does |
 | --- | --- |
+| `scaffold` | Installs the generic knowledge-base layout (see above). |
 | `init` | Creates `docs/sources/` (git-ignored except `index.md`, `.gitignore`, `ingest-log.csv`), the ingest log, and `extracted/` (git-ignored). |
 | `inventory` | Hashes new files in `docs/sources/` and logs them as `pending`. It also reports files that changed since they were logged, and logged files that aren't present locally. |
 | `extract` | Builds `extracted/<slug>/` for a source; see the table below. Moves the log row to `extracted`. |
@@ -85,7 +118,7 @@ agents' workspaces at the same path the agents see:
 ```
 
 Then add an MCP connection in Paperclip for `http://<kb-mcp-url>`. Agents call
-`kb_inventory`, `kb_extract`, `kb_figure`, `kb_log`, `kb_check` and `kb_report`, passing
+`kb_scaffold`, `kb_inventory`, `kb_extract`, `kb_figure`, `kb_log`, `kb_check` and `kb_report`, passing
 `repo` as the absolute path of their checkout. Requests for paths outside `--allowed-root`
 are refused.
 

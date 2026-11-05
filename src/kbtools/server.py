@@ -39,6 +39,11 @@ def _run(repo: str, *args: str) -> str:
     return f"exit {run.returncode}\n{output}"
 
 
+def _run_dir(repo: str, *args: str) -> str:
+    """Like _run, but for commands that work before docs/ exists (scaffold)."""
+    return _run(repo, *args)
+
+
 def build_server(host: str = "0.0.0.0", port: int = 8765):
     from mcp.server.fastmcp import FastMCP
     from mcp.types import ToolAnnotations
@@ -49,6 +54,14 @@ def build_server(host: str = "0.0.0.0", port: int = 8765):
     # repository's docs/sources log, extracted/ and docs/ assets, never delete user content.
     read = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
     write = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+
+    @mcp.tool(annotations=write)
+    def kb_scaffold(repo: str, project: str, by: str = "", dry_run: bool = False) -> str:
+        """Install the generic knowledge-base layout (docs/ sections, conventions, process pages,
+        AGENTS.md/CLAUDE.md pointers, tools/kb, data/, intake folders) into a repository.
+        Never overwrites existing files; use dry_run=true to preview."""
+        args = ["scaffold", "--project", project] + (["--by", by] if by else []) + (["--dry-run"] if dry_run else [])
+        return _run_dir(repo, *args)
 
     @mcp.tool(annotations=write)
     def kb_init(repo: str) -> str:

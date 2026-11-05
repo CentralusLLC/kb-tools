@@ -1,0 +1,4 @@
+# Extraction packages (text, renders, media) are reproducible working output.
+# Curated figures are copied into docs/ with `kb figure`.
+*
+!.gitignore
