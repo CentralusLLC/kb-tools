@@ -1,0 +1,25 @@
+# Outside trackers that mirror docs/work/ (see docs/process/work-tracking.md).
+# Leave a section empty (or delete it) if the tracker is not used.
+# Sync is one way, repository -> tracker; tracker-owned fields are assignee and live progress.
+
+github:
+  repo: ""                 # owner/name
+  epic_label: epic         # label for epic issues (or use milestones)
+  item_label: work-item
+
+jira:
+  base_url: ""             # https://<site>.atlassian.net
+  project: ""              # project key, e.g. PRJ
+  epic_issue_type: Epic
+  item_issue_type: Story
+  # Map Jira workflow statuses to item work_status (used for drift reports).
+  status_map:
+    "To Do": todo
+    "In Progress": in_progress
+    "In Review": in_review
+    "Done": done
+
+paperclip:
+  url: ""                  # https://<host>
+  company: ""              # company prefix, e.g. PRJ
+  project: ""              # project name or id; its workspace is this repository

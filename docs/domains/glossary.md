@@ -1,0 +1,20 @@
+---
+type: Glossary
+title: Glossary
+description: "Definitions of kb-tools's domain terms. Use these terms consistently in code, docs and UI."
+tags: [domains, glossary, terminology]
+status: draft
+generated:
+  by: claude-code/opus-5.5
+  at: 2026-11-05T06:34:50Z
+---
+
+# Glossary
+
+Keep terms in alphabetical order; link each to its concept page when one exists, and cite
+where the definition comes from. **Aliases** lists other words people use for the same
+thing (synonyms, abbreviations, old names), so searches with the "wrong" word still land here.
+
+| Term | Aliases | Definition |
+| --- | --- | --- |
+| TODO | | |

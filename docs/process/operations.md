@@ -1,0 +1,49 @@
+---
+type: Process
+title: Operations
+description: "Release, deployment, monitoring, incident and access processes for kb-tools."
+tags: [process, operations, release]
+status: draft
+generated:
+  by: claude-code/opus-5.5
+  at: 2026-11-05T06:34:50Z
+---
+
+# Operations
+
+> TODO: Fill in once [environments](../environments/index.md) exist.
+
+## Releases
+
+Versioning, release notes and the record of what is deployed where:
+[Release notes](release-notes.md) and [releases/](../releases/index.md).
+
+> TODO: Release checklist (beyond release notes).
+
+## Deployments
+
+> TODO: How each environment is deployed, by whom or what, and how to roll back. Every
+> deployment adds a row to the release's Deployments table ([Release notes](release-notes.md#3-when-a-release-is-deployed)).
+
+## Monitoring and alerting
+
+> TODO: What is monitored, where alerts go, service levels.
+
+## Rollback and backups
+
+> TODO: How to roll back each deployment, which data is backed up, how often, where, and when
+> a restore was last tested.
+
+## Runbooks
+
+Repeatable operational procedures (deploy, restore, rotate a secret, handle an alert) get one
+page each in `process/runbooks/` (`type: Runbook`): when to use it, prerequisites, numbered steps,
+how to verify, and how to undo.
+
+## Incidents
+
+> TODO: Severity levels, response steps, post-incident review.
+
+## Secrets and access
+
+See [Security](security.md). Never put secrets in this knowledge base.
