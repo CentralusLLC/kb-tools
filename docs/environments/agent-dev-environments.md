@@ -49,8 +49,12 @@ flowchart LR
 
 - `agentdev` (its own uid): locked password, no sudo, no groups, linger, its own rootless Docker.
   Agents' builds and installs cannot reach Paperclip, its database or its secrets.
-- Egress (`/etc/nftables-org-isolation.nft`): internet, DNS and the LLM gateway only; LAN,
-  tailnet and other accounts' ports are rejected (verified 2026-11-05).
+- Egress (`/etc/nftables-org-isolation.nft`): internet, DNS, the LLM gateway, and Paperclip's
+  HTTPS front only (`<host>.<tailnet>.ts.net:22000`, i.e. <tailnet-ip>:22000). LAN, the rest of
+  the tailnet, Hindsight and other accounts' ports are rejected (verified 2026-11-05).
+- Why Paperclip's port is open: `claude_local` remote runs reach the Paperclip API through the
+  SSH callback bridge, but its managed `git`/`gh` launchers fetch GitHub credentials from the
+  instance's public URL (`heartbeat.ts`), so SSH runs need that one path to fetch and push.
 - Paperclip (centralus) reaches dev containers and the manager on `<host-ip>` (internal
   dummy interface, not exposed to the LAN) in its allowed range: manager `<manager-port>`, dev
   containers `<port-range>`.
