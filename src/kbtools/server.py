@@ -41,21 +41,27 @@ def _run(repo: str, *args: str) -> str:
 
 def build_server(host: str = "0.0.0.0", port: int = 8765):
     from mcp.server.fastmcp import FastMCP
+    from mcp.types import ToolAnnotations
 
     mcp = FastMCP("kb-tools", instructions=INSTRUCTIONS, host=host, port=port)
+    # Risk hints for clients that classify tools (Paperclip quarantines destructive tools
+    # and gates writes): reads are read-only; writes only add or update files inside the
+    # repository's docs/sources log, extracted/ and docs/ assets, never delete user content.
+    read = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+    write = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 
-    @mcp.tool()
+    @mcp.tool(annotations=write)
     def kb_init(repo: str) -> str:
         """Scaffold docs/sources (git-ignored), docs/sources/ingest-log.csv and extracted/ if missing."""
         return _run(repo, "init")
 
-    @mcp.tool()
+    @mcp.tool(annotations=write)
     def kb_inventory(repo: str, by: str, origin: str = "") -> str:
         """Hash new files in docs/sources and log them as pending. `by` is who is logging,
         e.g. 'paperclip/<agent-name>'; `origin` is where the files came from, e.g. 'paperclip:CEN-12'."""
         return _run(repo, "inventory", "--by", by, "--origin", origin)
 
-    @mcp.tool()
+    @mcp.tool(annotations=write)
     def kb_extract(repo: str, sources: list[str] | None = None, pending: bool = False,
                    dpi: int = 120, force: bool = False) -> str:
         """Build extraction packages in extracted/<slug>/: text.md, pages.md, slides.md (PowerPoint),
@@ -64,7 +70,7 @@ def build_server(host: str = "0.0.0.0", port: int = 8765):
         args = ["extract", "--dpi", str(dpi)] + (["--pending"] if pending else list(sources or []))
         return _run(repo, *args, *(["--force"] if force else []))
 
-    @mcp.tool()
+    @mcp.tool(annotations=write)
     def kb_figure(repo: str, image: str, out: str, crop: str = "", page: str = "", alt: str = "",
                   caption: str = "", source: str = "", max_width: int = 1600, overwrite: bool = False) -> str:
         """Crop/resize a render or media image into docs/ (e.g. docs/<section>/assets/name.png) and return
@@ -80,7 +86,7 @@ def build_server(host: str = "0.0.0.0", port: int = 8765):
             args.append("--overwrite")
         return _run(repo, *args)
 
-    @mcp.tool()
+    @mcp.tool(annotations=write)
     def kb_log(repo: str, source: str, status: str = "", by: str = "", outputs: str = "",
                add_outputs: list[str] | None = None, notes: str = "", origin: str = "", rehash: bool = False) -> str:
         """Update a source's ingest-log row. status: pending|extracted|reconciled|ingested|partial|skipped|superseded.
@@ -95,12 +101,12 @@ def build_server(host: str = "0.0.0.0", port: int = 8765):
             args.append("--rehash")
         return _run(repo, *args)
 
-    @mcp.tool()
+    @mcp.tool(annotations=read)
     def kb_check(repo: str, strict: bool = False) -> str:
         """Validate the ingest log, OKF front matter, links, images (alt text) and diagram element descriptions."""
         return _run(repo, "check", *(["--strict"] if strict else []))
 
-    @mcp.tool()
+    @mcp.tool(annotations=read)
     def kb_report(repo: str, format: str = "md", max_age: int = 365) -> str:
         """Verification level (human/machine/unverified), last verification date, age and flags
         (changed-since-verified, stale, verification-old, deprecated) for every page."""
