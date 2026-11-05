@@ -1,0 +1,10 @@
+{
+  // Development environment for {{PROJECT}}: used by people (VS Code, Codespaces) and by
+  // agent dev containers (the devenv manager adds sshd, node and the claude CLI on top).
+  // Add the project's toolchain to Dockerfile; see docs/environments/dev-environment.md.
+  "name": "{{PROJECT}}",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  }
+}

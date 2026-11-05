@@ -62,8 +62,9 @@ tests/        its tests          apps/<app>/tests/    each app's tests
   Bug fixes start with a test that reproduces the bug.
 - **Acceptance criteria are tested.** Each work item's acceptance criteria map to tests, or say
   how they were checked by hand.
-- **Run the tests before opening a pull request**, and report the result: the command, pass or fail,
-  and anything skipped. Never claim tests pass without running them.
+- **Run the tests before opening a pull request**, in the [dev environment](../environments/dev-environment.md),
+  and report the result: the command, pass or fail, and anything skipped. Never claim tests pass
+  without running them.
 - **Never weaken tests to make them pass.** Don't delete, skip or loosen assertions, raise
   timeouts, or mock away the code under test without saying why in the pull request.
 - **Tests are deterministic.** Seed randomness, freeze time, and don't depend on test order

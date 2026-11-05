@@ -7,7 +7,7 @@ description: "TODO: one sentence on what 0010-04 delivers."
 tags: [work-item]
 status: draft
 kind: task
-work_status: todo
+work_status: done
 priority: medium
 depends_on: []
 links: 
