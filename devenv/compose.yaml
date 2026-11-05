@@ -1,0 +1,25 @@
+# devenv manager, run as the isolated `agentdev` account (rootless Docker, its own uid).
+# Deployed to /home/agentdev/stacks/devenv. Paperclip (centralus) reaches it at
+# http://<host-ip>:<manager-port>/mcp with the bearer token in DEVENV_TOKEN.
+name: devenv
+services:
+  manager:
+    image: kb-devenv:latest
+    build: .
+    restart: unless-stopped
+    environment:
+      DEVENV_TOKEN: ${DEVENV_TOKEN:?set in .env}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      DEVENV_HOST_IP: <host-ip>
+      DEVENV_PORTS: <port-range>
+    volumes:
+      - ${XDG_RUNTIME_DIR:?}/docker.sock:/var/run/docker.sock
+      - ./data:/data
+    ports:
+      - "<host-ip>:<manager-port>:8780"
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8780/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

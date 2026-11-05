@@ -1,0 +1,11 @@
+Port 22
+HostKey /etc/devenv/hostkeys/ssh_host_ed25519_key
+AuthorizedKeysFile /etc/devenv/authorized_keys
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin no
+AllowUsers agent
+X11Forwarding no
+AllowTcpForwarding no
+PermitUserEnvironment no
+SetEnv NPM_CONFIG_PREFIX=/home/agent/.npm-global
