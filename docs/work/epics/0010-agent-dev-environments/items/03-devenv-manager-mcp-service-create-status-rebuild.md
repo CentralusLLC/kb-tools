@@ -3,7 +3,7 @@ type: Work Item
 id: "0010-03"
 epic: "0010"
 title: "devenv manager MCP service (create, status, rebuild, install, stop)"
-description: "TODO: one sentence on what 0010-03 delivers."
+description: "An MCP service in the agentdev account that creates, rebuilds, installs into, stops and deletes per-project dev containers, with per-project keys and builds from the synced worktree."
 tags: [work-item]
 status: draft
 kind: story
@@ -25,12 +25,19 @@ Part of [epic 0010](../epic.md) ([plan](../plan.md)).
 
 ## What and why
 
-> TODO: The change, and the user or business value it delivers.
+Agents need a complete dev environment per project, set up without the owner touching the Paperclip host.
+The manager gives agents lifecycle tools behind Paperclip approval cards.
 
 ## Acceptance criteria
 
-- [ ] TODO
+- [x] Tools: `devenv_status`, `devenv_create`, `devenv_rebuild`, `devenv_install`, `devenv_stop`, `devenv_delete` (destructive).
+- [x] Bearer token required; agents cannot call it directly.
+- [x] Per-project public key on `devenv_create`; no shared key needed for new projects.
+- [x] No GitHub credential: `devenv_rebuild` builds `.devcontainer/` from the worktree Paperclip synced in.
+- [x] Container swap waits until no agent session runs.
+- [x] Unit tests (`devenv/tests`).
+- [ ] Deployed and exercised by an agent through Paperclip (0010-05).
 
 ## Notes
 
-> TODO: Design notes, constraints, links. Record decisions that outlive this item as ADRs.
+See the [plan](../plan.md) for the 2026-11-05 revision (no clone, per-project keys).

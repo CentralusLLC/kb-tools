@@ -9,7 +9,6 @@ services:
     restart: unless-stopped
     environment:
       DEVENV_TOKEN: ${DEVENV_TOKEN:?set in .env}
-      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       DEVENV_HOST_IP: <host-ip>
       DEVENV_PORTS: <port-range>
     volumes:

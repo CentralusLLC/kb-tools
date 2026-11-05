@@ -1,7 +1,7 @@
 ---
 type: Environment
 title: Agent dev environments
-description: "How the devenv manager provides per-project dev containers for Paperclip agents on the Paperclip host: architecture, isolation, ports, MCP tools, Paperclip registration, and operations."
+description: "How the devenv manager provides per-project dev containers for Paperclip agents on the Paperclip host: architecture, isolation, ports, MCP tools, the setup flow through Paperclip approvals, and operations."
 tags: [environments, agents, paperclip, devenv, ssh, operations]
 status: draft
 generated:
@@ -14,7 +14,9 @@ generated:
 Paperclip agents develop and test inside **per-project dev containers** on the Paperclip host, through
 Paperclip's SSH execution environment. The containers are built from each repository's
 `.devcontainer/` by the **devenv manager** (`devenv/` in this repository) and run under an
-isolated account. Epic 0010 tracks the work ([roadmap](../work/index.md)).
+isolated account. The manager holds no GitHub credential: Paperclip syncs the worktree into
+the container on every run and writes new commits back, and pushes go through Paperclip's
+managed GitHub launchers. Epic 0010 tracks the work ([roadmap](../work/index.md)).
 
 ```mermaid
 flowchart LR
@@ -22,7 +24,7 @@ flowchart LR
   pc -->|MCP + bearer token, <host-ip>:<manager-port>| mgr[devenv manager, agentdev]
   mgr -->|rootless Docker socket| docker[agentdev Docker daemon]
   docker --> dc
-  mgr -->|git clone, read-only token| gh[GitHub]
+  mgr -->|copies synced worktree to build .devcontainer| dc
 ```
 
 **Nodes**
@@ -33,7 +35,6 @@ flowchart LR
 | devenv-PROJECT container | Project dev image plus agent overlay: sshd (user `agent`, key-only, no sudo), node, claude CLI, git |
 | devenv manager | MCP server (`kb-devenv` image) in `~agentdev/stacks/devenv` |
 | agentdev Docker daemon | Rootless Docker of the `agentdev` account (its own uid) |
-| GitHub | Project repositories (private: the manager needs a read-only token) |
 
 **Edges**
 
@@ -42,7 +43,7 @@ flowchart LR
 | Paperclip server | devenv-PROJECT container | SSH execution (workspace synced per run) | visible: SSH trial 2026-11-05 |
 | Paperclip server | devenv manager | MCP tool calls through a Paperclip connection | visible: client test 2026-11-05 |
 | devenv manager | agentdev Docker daemon | builds and runs containers | visible: `compose.yaml` socket mount |
-| devenv manager | GitHub | clones repositories to build | visible: `server.py` `_clone` |
+| devenv manager | devenv-PROJECT container | copies the synced worktree out as the build context | visible: `server.py` `_export_workspace` |
 
 ## Isolation
 
@@ -56,18 +57,27 @@ flowchart LR
 - The manager requires a bearer token known only to the Paperclip connection, so agents cannot
   call it directly and bypass Paperclip's approvals.
 
-## Registering a project's environment in Paperclip (instance admin)
+## Setting up a project (agent, with approvals)
 
-Done once per project, after `devenv_create` reports `running`:
+Once per company, the owner adds the manager as an MCP connection (`http://<host-ip>:<manager-port>/mcp`,
+header `Authorization: Bearer <DEVENV_TOKEN>`) and sets **ask first** on `devenv_create`,
+`devenv_rebuild` and `devenv_install`. Then, per project:
 
-1. **Settings → Secrets:** company secret `DEVENV_SSH_KEY` holds the manager's private key
-   (`~agentdev/stacks/devenv/data/keys/paperclip`), created once for all projects.
-2. **Environments → new SSH environment** with the values `devenv_status` returns:
-   - host `<host-ip>`, the project's port, user `agent`;
-   - remote workspace `/home/agent/workspace`;
-   - private key from `DEVENV_SSH_KEY`;
-   - the `knownHosts` line, with strict host-key checking on.
-3. **Project settings → environment:** select it, then run a probe.
+1. The agent generates an ed25519 key pair and submits the private key as a **secret proposal**
+   (for example `DEVENV_SSH_KEY_<PROJECT>`); the owner approves the card. The key is never printed.
+2. The agent calls `devenv_create(project, public_key, private_key_secret)` (approval card), then
+   polls `devenv_status` until `running`. The container starts from the default image.
+3. **Environments → new SSH environment** with the settings `devenv_status` returns (host
+   `<host-ip>`, the project's port, user `agent`, workspace `/home/agent/workspace`, the
+   private-key secret, the `knownHosts` line with strict checking), selected on the project, then
+   probed. Instance admins do this, or an agent granted `environments:manage`.
+4. After the first run has synced the repository, the agent calls `devenv_rebuild` (approval
+   card). The manager builds `.devcontainer/` from the synced worktree and swaps the container
+   once no agent session is running in it. Rebuild again whenever `.devcontainer/` changes.
+
+System packages: preferably a pull request to `.devcontainer/` followed by `devenv_rebuild`, so
+the review is the approval; `devenv_install` (approval card) for urgent needs, persisted for
+rebuilds.
 
 ## Operations
 
@@ -83,5 +93,5 @@ sudo cat /home/agentdev/stacks/devenv/data/state.json                        # p
 Update the manager: copy `devenv/` to `~agentdev/stacks/devenv` (keeping `data/` and `.env`),
 then `docker compose up -d --build`.
 
-> TODO: Add the read-only GitHub token (`GITHUB_TOKEN` in `~agentdev/stacks/devenv/.env`) so the
-> manager can clone the private repositories, then rebuild kb-tools' environment from GitHub.
+kb-tools' environment predates per-project keys and uses the shared fallback key
+(`data/keys/paperclip`, `DEVENV_PUBKEY`). Remove the fallback once it has its own key.

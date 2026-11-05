@@ -3,8 +3,13 @@
 Per-project dev containers for AI agents, used through Paperclip's **SSH execution
 environment**. See epic 0010 in `docs/work/` and `docs/environments/agent-dev-environments.md`.
 
-- Builds each project's dev image from its `.devcontainer/` (image or Dockerfile build, with
-  target and args) or, without one, from `kbdevenv/default/`.
+- Holds **no GitHub credential and never clones**. Paperclip's SSH environment syncs the
+  project worktree into the container on every run. `devenv_create` starts the project from
+  `kbdevenv/default/`; `devenv_rebuild` then builds the `.devcontainer/` (image or Dockerfile
+  build, with target and args) from that synced worktree. The container is swapped only once no
+  agent session is running in it.
+- **Per-project SSH keys:** `devenv_create` takes the public key; the agent stores the private
+  half in Paperclip through an approved secret proposal.
 - Adds the **agent overlay** (`kbdevenv/overlay/`): sshd (key-only, user `agent`, no sudo),
   git, tar, node and the `claude` CLI.
 - Runs one container per project with sshd on `DEVENV_HOST_IP:<port>` (<port-range>), a
@@ -15,3 +20,6 @@ environment**. See epic 0010 in `docs/work/` and `docs/environments/agent-dev-en
 
 Runs as the isolated `agentdev` account (its own rootless Docker), so agents' builds cannot
 reach Paperclip, its database or its secrets.
+
+Tests (need Python 3.12):
+`docker run --rm -v "$PWD:/src" -w /src python:3.12-slim sh -c "pip -q install pytest && PYTHONPATH=. python -m pytest -q tests"`
