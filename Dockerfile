@@ -35,6 +35,19 @@ RUN pip install ".[dev]"
 COPY tests ./tests
 RUN python -m pytest -q
 
+# Development environment (used by .devcontainer and agent dev containers): the base
+# toolchain plus test dependencies. Source comes from the mounted or synced workspace;
+# run tests with `python -m pytest` (pytest finds src/ through pythonpath).
+FROM base AS dev
+# Dependencies only: the package itself is removed so tests always import the
+# workspace's src/ (an installed copy would mask the code being changed).
+RUN pip install ".[dev,server]" \
+ && pip uninstall -y kb-tools \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends git make \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace
+
 FROM base AS runtime
 LABEL org.opencontainers.image.title="kb-tools" \
       org.opencontainers.image.description="Document ingestion and OKF knowledge-base tools"

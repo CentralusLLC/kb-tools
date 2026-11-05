@@ -44,4 +44,5 @@ When you report back, say which `docs/` pages you relied on.
 - Ingestion: [`docs/process/ingestion.md`](docs/process/ingestion.md)
 - Knowledge base conventions: [`docs/conventions.md`](docs/conventions.md)
 - Domain terms: [`docs/domains/glossary.md`](docs/domains/glossary.md)
+- Dev environment (where tests run; how to get one or install packages): [`docs/environments/dev-environment.md`](docs/environments/dev-environment.md)
 - Local setup: [`docs/environments/local.md`](docs/environments/local.md)

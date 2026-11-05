@@ -1,0 +1,16 @@
+[project]
+name = "kb-devenv"
+version = "0.1.0"
+description = "Per-project agent dev containers for Paperclip's SSH execution environment, managed over MCP."
+requires-python = ">=3.11"
+dependencies = ["mcp>=1.12,<2", "uvicorn>=0.30"]
+
+[project.scripts]
+devenv-manager = "kbdevenv.server:main"
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kbdevenv"]

@@ -1,0 +1,14 @@
+{
+  // Development environment for kb-tools: LibreOffice, fonts, Python and test tools.
+  // Used by VS Code / Codespaces and by agent dev containers (devenv manager).
+  "name": "kb-tools",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "..",
+    "target": "dev"
+  },
+  "postCreateCommand": "python -m pytest -q",
+  "customizations": {
+    "vscode": { "extensions": ["ms-python.python"] }
+  }
+}

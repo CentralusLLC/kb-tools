@@ -22,6 +22,7 @@ Code follows one of two common layouts. Choose one in an ADR:
 | Path | Purpose |
 | --- | --- |
 | `src/` + `tests/`, or `apps/` + `packages/` + `tests/` | Code and tests ([Testing](testing.md)) |
+| `.devcontainer/` | The dev environment for people and agents ([Dev environment](../environments/dev-environment.md)) |
 | `docs/` | Knowledge base (this bundle), including user documentation in `docs/user/` |
 | `data/` | Structured research data ([Research data](../architecture/research-data.md)) |
 | `tools/` | Scripts for agents and people ([tools/README.md](../../tools/README.md)) |
