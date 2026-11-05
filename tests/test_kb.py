@@ -202,3 +202,55 @@ def test_scaffold_never_overwrites(tmp_path):
     assert (tmp_path / "AGENTS.md").read_text() == "mine\n"
     second = scaffold(tmp_path, project="X", actor="t")
     assert second["created"] == []
+
+
+def test_work_lifecycle_and_checks(tmp_path):
+    from kbtools import work
+    from kbtools.common import Repo
+    from kbtools.scaffold import scaffold
+
+    (tmp_path / ".git").mkdir()
+    scaffold(tmp_path, project="Acme", actor="t")
+    repo = Repo(tmp_path)
+    folder = work.new_epic(repo, "Self-serve onboarding", by="human:test", priority="high")
+    assert folder.name == "0001-self-serve-onboarding"
+    assert (folder / "plan.md").exists()
+    first = work.new_item(repo, "1", "Signup form", by="human:test")
+    second = work.new_item(repo, "0001", "Email verification", by="human:test", depends_on=["0001-01"])
+    assert first.name == "01-signup-form.md" and second.name == "02-email-verification.md"
+    roadmap = (repo.docs / "work" / "index.md").read_text()
+    assert "[0001](epics/0001-self-serve-onboarding/epic.md)" in roadmap and "0/2" in roadmap
+    errors, warnings = run_checks(repo)
+    assert errors == [] and warnings == [], errors + warnings
+
+    work.set_status(repo, "0001-01", "done")
+    work.set_status(repo, "0001", "done")
+    errors, warnings = run_checks(repo)
+    assert any("still open: 0001-02" in w for w in warnings)
+    assert "1/2" in (repo.docs / "work" / "index.md").read_text()
+    open_rows = [line.split(" | ")[0] for line in work.listing(repo, open_only=True).splitlines()[2:]]
+    assert open_rows == ["| 0001-02"]
+
+    bad = second.read_text().replace('depends_on: ["0001-01"]', 'depends_on: ["0009-01"]').replace('id: "0001-02"', 'id: "0001-05"')
+    second.write_text(bad)
+    errors, _ = run_checks(repo)
+    joined = "\n".join(errors)
+    assert "depends_on 0009-01 does not exist" in joined and 'must be "0001-02"' in joined
+
+
+def test_work_index_staleness_is_reported(tmp_path):
+    from kbtools import work
+    from kbtools.common import Repo
+    from kbtools.scaffold import scaffold
+
+    (tmp_path / ".git").mkdir()
+    scaffold(tmp_path, project="Acme", actor="t")
+    repo = Repo(tmp_path)
+    epic = work.new_epic(repo, "Reporting", by="t")
+    text = (epic / "epic.md").read_text().replace("work_status: proposed", "work_status: planned")
+    (epic / "epic.md").write_text(text)
+    _, warnings = run_checks(repo)
+    assert any("roadmap is out of date" in w for w in warnings)
+    work.write_index(repo)
+    _, warnings = run_checks(repo)
+    assert not any("roadmap is out of date" in w for w in warnings)

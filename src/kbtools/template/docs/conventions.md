@@ -85,6 +85,9 @@ list is the project's vocabulary. Add new types here before using them.
 | `Environment` | A place the project runs or deploys to |
 | `Glossary` | Term definitions |
 | `Notes` | Raw or unstructured notes awaiting curation |
+| `Epic` | A business need being delivered (`work/epics/NNNN-*/epic.md`) |
+| `Implementation Plan` | How an epic is delivered (`work/epics/NNNN-*/plan.md`) |
+| `Work Item` | A story or task within an epic (`work/epics/NNNN-*/items/NN-*.md`) |
 | `Template` | Page templates in `references/templates/` |
 
 ## Verification and trust

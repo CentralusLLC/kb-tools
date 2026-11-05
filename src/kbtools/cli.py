@@ -125,6 +125,26 @@ def cmd_figure(args) -> int:
     return 0
 
 
+def cmd_work(args) -> int:
+    from . import work
+
+    repo = _repo(args)
+    if args.work_command == "new-epic":
+        folder = work.new_epic(repo, args.title, by=args.by, priority=args.priority, status=args.status)
+        print(f"created {repo.rel(folder)}/epic.md and plan.md")
+    elif args.work_command == "new-item":
+        path = work.new_item(repo, args.epic, args.title, by=args.by, priority=args.priority,
+                             status=args.status, depends_on=args.depends_on or [])
+        print(f"created {repo.rel(path)}")
+    elif args.work_command == "set":
+        print(f"updated {repo.rel(work.set_status(repo, args.id, args.status))}")
+    elif args.work_command == "index":
+        print(f"updated {repo.rel(work.write_index(repo))}")
+    elif args.work_command == "list":
+        print(work.listing(repo, status=args.status, open_only=args.open), end="")
+    return 0
+
+
 def cmd_check(args) -> int:
     from .check import run_checks
 
@@ -201,6 +221,29 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--source", default="", help="citation, e.g. 'docs/sources/deck.pptx, slide 4'")
     p.add_argument("--overwrite", action="store_true")
     p.set_defaults(func=cmd_figure)
+
+    p = sub.add_parser("work", help="repository-native work tracking: epics, plans and items in docs/work/")
+    work_sub = p.add_subparsers(dest="work_command", required=True)
+    w = work_sub.add_parser("new-epic", help="create docs/work/epics/NNNN-slug/ with epic.md and plan.md")
+    w.add_argument("title")
+    w.add_argument("--by", required=True, help="human:<name> or <tool>/<version>")
+    w.add_argument("--priority", default="medium", choices=["critical", "high", "medium", "low"])
+    w.add_argument("--status", default="proposed", help="proposed|planned|in_progress|done|cancelled")
+    w = work_sub.add_parser("new-item", help="create items/NN-slug.md in an epic")
+    w.add_argument("epic", help="epic number, e.g. 0007")
+    w.add_argument("title")
+    w.add_argument("--by", required=True)
+    w.add_argument("--priority", default="medium", choices=["critical", "high", "medium", "low"])
+    w.add_argument("--status", default="todo", help="backlog|todo|in_progress|in_review|blocked|done|cancelled")
+    w.add_argument("--depends-on", action="append", help="item id this depends on (repeatable)")
+    w = work_sub.add_parser("set", help="set work_status of an epic or item")
+    w.add_argument("id", help="epic id (0007) or item id (0007-02)")
+    w.add_argument("status")
+    work_sub.add_parser("index", help="regenerate the roadmap in docs/work/index.md")
+    w = work_sub.add_parser("list", help="list epics and items")
+    w.add_argument("--status")
+    w.add_argument("--open", action="store_true", help="only items and epics not done or cancelled")
+    p.set_defaults(func=cmd_work)
 
     p = sub.add_parser("check", help="validate the ingest log, OKF front matter, links, images and diagrams")
     p.add_argument("--strict", action="store_true", help="fail on warnings too")

@@ -106,4 +106,9 @@ def run_checks(repo: Repo) -> tuple[list[str], list[str]]:
         warnings.append("docs/index.md is missing")
     for page in okf.bundle_pages(repo.docs):
         _check_page(repo, page, errors, warnings)
+    from .work import validate as validate_work
+
+    work_errors, work_warnings = validate_work(repo)
+    errors += work_errors
+    warnings += work_warnings
     return errors, warnings

@@ -11,13 +11,10 @@ generated:
 
 # Project management
 
-## Planning
+## Planning and tracking
 
-> TODO: Where the roadmap lives (a page here, or issues in a tracker linked from here).
-
-## Work tracking
-
-> TODO: System of record for tasks, workflow states, and how tasks link to pull requests.
+Work is planned and tracked in the repository: the [roadmap](../work/index.md) and its
+epics, plans and items, following [Work tracking](work-tracking.md). Outside trackers mirror it.
 
 ## Agents
 

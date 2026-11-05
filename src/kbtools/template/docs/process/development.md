@@ -28,7 +28,12 @@ generated:
 - Update the knowledge base in the same pull request when behaviour, setup or rules change,
   and run `tools/kb check`.
 
-> TODO: Branch naming, commit message style, review requirements, merge strategy.
+- Branch per work item: `NNNN-NN-short-slug` (for example `0007-02-email-verification`).
+- Pull request title: `[NNNN-NN] Title`. The same pull request updates the item file
+  (`work_status`, acceptance criteria) and closes tracker issues (`Closes #41`).
+  See [Work tracking](work-tracking.md#lifecycle).
+
+> TODO: Commit message style, review requirements, merge strategy.
 
 ## Testing
 

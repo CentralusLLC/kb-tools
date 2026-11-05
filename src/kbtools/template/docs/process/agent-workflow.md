@@ -21,7 +21,10 @@ Every AI agent working in this repository follows these rules, whatever tool it 
    [Knowledge base maintenance](knowledge-base.md).
 3. For domain topics, read the topic's sub-wiki in [domains](../domains/index.md), and use the
    [glossary](../domains/glossary.md) terms.
-4. When you report back, say which pages you relied on.
+4. For implementation work, find the work item (`tools/kb work list --open`) or create it
+   with its epic and plan first ([Work tracking](work-tracking.md)). Write plans in the epic's
+   `plan.md`, not in chat or scratch files.
+5. When you report back, say which pages you relied on.
 
 ## Ask before you build
 

@@ -20,6 +20,8 @@ When you report back, say which `docs/` pages you relied on.
 - **Ask before you build.** Ask before choosing code locations, languages, runtimes or build
   tools, before creating top-level projects or configuration, and before adding assets or
   binaries. When information is missing, stop and ask.
+- **Plan in the repository.** Implementation work belongs to a work item in `docs/work/`
+  (`tools/kb work`). Put plans in the epic's `plan.md`. Branch `NNNN-NN-slug`, PR title `[NNNN-NN] ...`.
 - **Branch and open a pull request** unless told otherwise.
 - **Keep the knowledge base current.** When a change alters behaviour, setup or rules,
   update the matching `docs/` page in the same pull request, and run `tools/kb check`.
@@ -31,6 +33,7 @@ When you report back, say which `docs/` pages you relied on.
 
 ## Quick reference
 
+- Work tracking (epics, plans, items; branch and PR naming): [`docs/process/work-tracking.md`](docs/process/work-tracking.md), roadmap in [`docs/work/index.md`](docs/work/index.md)
 - Ingestion: [`docs/process/ingestion.md`](docs/process/ingestion.md)
 - Knowledge base conventions: [`docs/conventions.md`](docs/conventions.md)
 - Domain terms: [`docs/domains/glossary.md`](docs/domains/glossary.md)

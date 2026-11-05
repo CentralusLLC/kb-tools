@@ -115,6 +115,31 @@ def build_server(host: str = "0.0.0.0", port: int = 8765):
         return _run(repo, *args)
 
     @mcp.tool(annotations=read)
+    def kb_work_list(repo: str, status: str = "", open_only: bool = False) -> str:
+        """List epics and work items in docs/work/ (id, kind, title, work_status, dependencies, path)."""
+        return _run(repo, "work", "list", *(["--status", status] if status else []), *(["--open"] if open_only else []))
+
+    @mcp.tool(annotations=write)
+    def kb_work_new_epic(repo: str, title: str, by: str, priority: str = "medium", status: str = "proposed") -> str:
+        """Create docs/work/epics/NNNN-slug/ with epic.md (business need) and plan.md (implementation plan)."""
+        return _run(repo, "work", "new-epic", title, "--by", by, "--priority", priority, "--status", status)
+
+    @mcp.tool(annotations=write)
+    def kb_work_new_item(repo: str, epic: str, title: str, by: str, priority: str = "medium",
+                         status: str = "todo", depends_on: list[str] | None = None) -> str:
+        """Create a work item (story/task) file in an epic's items/ folder; ids are NNNN-NN."""
+        args = ["work", "new-item", epic, title, "--by", by, "--priority", priority, "--status", status]
+        for dependency in depends_on or []:
+            args += ["--depends-on", dependency]
+        return _run(repo, *args)
+
+    @mcp.tool(annotations=write)
+    def kb_work_set(repo: str, id: str, status: str) -> str:
+        """Set work_status of an epic (proposed|planned|in_progress|done|cancelled) or item
+        (backlog|todo|in_progress|in_review|blocked|done|cancelled); regenerates the roadmap."""
+        return _run(repo, "work", "set", id, status)
+
+    @mcp.tool(annotations=read)
     def kb_check(repo: str, strict: bool = False) -> str:
         """Validate the ingest log, OKF front matter, links, images (alt text) and diagram element descriptions."""
         return _run(repo, "check", *(["--strict"] if strict else []))
