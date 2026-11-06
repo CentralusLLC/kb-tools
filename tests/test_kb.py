@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 
 from conftest import make_docx, make_pdf, make_png, make_pptx, make_xlsx, needs_soffice
@@ -321,3 +322,42 @@ def test_work_kinds_and_retrospective(tmp_path):
     bug.write_text(bug.read_text().replace("kind: bug", "kind: defect"))
     errors, _ = run_checks(repo)
     assert any("kind must be one of" in e for e in errors)
+
+
+def test_mcp_kb_catalog_write_regenerates_catalog(tmp_path, monkeypatch):
+    """kb_catalog over MCP: write=true does what `kb catalog --write` does; default only lists."""
+    import asyncio
+    from pathlib import Path
+
+    from kbtools import catalog, server, work
+    from kbtools.common import Repo
+    from kbtools.scaffold import scaffold
+
+    src = str(Path(server.__file__).resolve().parents[1])  # the tool runs the CLI in a subprocess
+    monkeypatch.setenv("PYTHONPATH", src + (":" + os.environ["PYTHONPATH"] if os.environ.get("PYTHONPATH") else ""))
+    scaffold(tmp_path, project="Shop", actor="t")
+    repo = Repo(tmp_path)
+    work.new_epic(repo, "Reporting", by="t")
+    path = repo.docs / "catalog.md"
+    path.write_text(path.read_text().replace("0001 Reporting", "hand-edited row"))
+    assert catalog.is_stale(repo)
+
+    mcp = server.build_server()
+
+    def call(**arguments) -> str:
+        result = asyncio.run(mcp.call_tool("kb_catalog", {"repo": str(tmp_path), **arguments}))
+        content = result[0] if isinstance(result, tuple) else result
+        return "".join(getattr(block, "text", "") for block in content)
+
+    listing = call()
+    assert listing.startswith("exit 0") and "0001 Reporting" in listing
+    assert catalog.is_stale(repo)  # listing never writes
+
+    written = call(write=True)
+    assert written.startswith("exit 0") and "updated docs/catalog.md" in written
+    assert not catalog.is_stale(repo)
+    assert "hand-edited row" not in path.read_text() and "0001 Reporting" in path.read_text()
+
+    tool = next(t for t in asyncio.run(mcp.list_tools()) if t.name == "kb_catalog")
+    assert tool.inputSchema["properties"]["write"]["default"] is False
+    assert tool.annotations.readOnlyHint is False  # it can now change files
