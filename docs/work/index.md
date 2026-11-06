@@ -21,6 +21,6 @@ generated (`tools/kb work index`), so do not edit between the markers.
 | [0007](epics/0007-release-notes-automation/epic.md) | Release notes automation | proposed | medium | 0/2 |  |
 | [0008](epics/0008-structured-fact-extraction/epic.md) | Structured fact extraction | proposed | low | 0/2 |  |
 | [0009](epics/0009-semantic-search-through-hindsight/epic.md) | Semantic search through Hindsight | proposed | low | 0/3 |  |
-| [0010](epics/0010-agent-dev-environments/epic.md) | Agent dev environments | in_progress | critical | 3/9 |  |
+| [0010](epics/0010-agent-dev-environments/epic.md) | Agent dev environments | in_progress | critical | 3/12 |  |
 | [0011](epics/0011-mcp-tool-parity-with-the-cli/epic.md) | MCP tool parity with the CLI | in_progress | low | 1/1 |  |
 <!-- kb:work-index:end -->
