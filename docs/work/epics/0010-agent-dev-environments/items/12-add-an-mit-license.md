@@ -29,8 +29,7 @@ A public repository needs a license. The owner chose MIT.
 
 ## Acceptance criteria
 
-- [ ] A root `LICENSE` file (MIT), with the copyright holder confirmed by the owner (for
-      example "Centralus LLC, 2026").
+- [ ] A root `LICENSE` file (MIT): "Copyright (c) 2026 Centralus LLC".
 - [ ] `pyproject.toml` has `license = "MIT"` and the MIT classifier.
 - [ ] A license section in `README.md`.
 - [ ] The Dockerfile sets the label `org.opencontainers.image.licenses=MIT`.
@@ -41,4 +40,4 @@ A public repository needs a license. The owner chose MIT.
 
 - Comes last in the public-release prep, after the audit (0010-11) and purge (0010-10), so the
   license lands on the rewritten history.
-- Open question: the copyright holder's exact name.
+- Copyright holder confirmed by the owner on 2026-11-06 (CEN-13): Centralus LLC, 2026.

@@ -50,8 +50,8 @@ See [Agent dev environments](../../../environments/agent-dev-environments.md):
 
 ## Items and sequencing
 
-Public-release prep (first): 0010-11 audit → 0010-10 purge with a single history rewrite →
-0010-12 license.
+Public-release prep (first): 0010-11 audit → 0010-13 make deployment-specific settings
+configurable → 0010-10 purge with a single history rewrite → 0010-12 license.
 
 1. Done: account (0010-01), overlay (0010-02), kb-tools dev target (0010-04).
 2. In progress: the manager (0010-03) now builds from the synced worktree; the SSH trial
@@ -64,7 +64,8 @@ Public-release prep (first): 0010-11 audit → 0010-10 purge with a single histo
 
 - The public-release history rewrite (0010-10) force-pushes every branch and tag and changes
   all commit hashes: it needs the owner's explicit approval first, happens only once (with the
-  0010-11 audit's history findings), and every clone, open PR and the v0.1.0 tag must be
+  0010-11 audit's history findings, after 0010-13 has made the deployment values
+  configurable), and every clone, open PR and the v0.1.0 tag must be
   re-synced afterwards.
 - Paperclip's SSH driver is its least-exercised path; probe after registration and keep "local"
   as the fallback.

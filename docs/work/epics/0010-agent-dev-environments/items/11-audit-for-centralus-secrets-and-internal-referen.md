@@ -48,16 +48,18 @@ and `tests/test_kb.py`. The working tree has no local-LLM hits; history has not 
 ## Acceptance criteria
 
 - [ ] A findings list (file or commit, kind, action).
-- [ ] Each finding is removed, generalised to configuration or environment defaults, or moved
-      to private deployment docs.
+- [ ] Each finding is removed, made configurable (see 0010-13) or moved to private deployment
+      docs whose home Chief decides.
 - [ ] Any real secret found is rotated.
 - [ ] A repeatable scan in CI or `kb check` prevents regressions.
 - [ ] History findings are handed to the single 0010-10 rewrite.
 
 ## Notes
 
-- Do this first: 0010-10's rewrite depends on its history findings.
+- Do this first: 0010-13 makes the deployment findings configurable, and 0010-10's rewrite
+  depends on the history findings.
 - Keep the findings list out of the public repository if it quotes the sensitive values;
   record kinds and locations, not the values.
-- Open question: should internal infrastructure detail (the devenv manager, the the Paperclip host
-  deployment) be removed outright or generalised into a configurable example?
+- Decided 2026-11-06 (owner, CEN-13): keep the devenv manager and the the Paperclip host deployment and
+  make their settings configurable through environment variables (0010-13), rather than
+  removing them.

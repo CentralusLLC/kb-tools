@@ -9,7 +9,7 @@ status: draft
 kind: chore
 work_status: todo
 priority: critical
-depends_on: ["0010-11"]
+depends_on: ["0010-11", "0010-13"]
 links: 
   github: ""
   jira: ""
@@ -57,7 +57,8 @@ Known tree hits (2026-11-06):
 ## Notes
 
 - Rewrite history once, combined with 0010-11's history findings; don't start this before
-  the audit's findings list exists.
+  the audit's findings list exists and 0010-13 has made the deployment values configurable
+  (so the rewrite can replace the old values in history too).
 - A rewrite changes every commit hash: the v0.1.0 tag, release notes and any links to
   commits need updating, and every clone must be re-cloned or hard-reset.
 - Open question: whether the leak guard's denylist lives in an untracked file, an
