@@ -114,12 +114,18 @@ def build_server(host: str = "0.0.0.0", port: int = 8765):
             args.append("--rehash")
         return _run(repo, *args)
 
-    @mcp.tool(annotations=read)
+    @mcp.tool(annotations=write)
     def kb_catalog(repo: str, format: str = "md", type: str = "", section: str = "", tag: str = "",
-                   tier: str = "", status: str = "", work_status: str = "", text: str = "") -> str:
+                   tier: str = "", status: str = "", work_status: str = "", text: str = "",
+                   write: bool = False) -> str:
         """List knowledge pages (path, type, title, description, tags, status, work_status, trust tier,
         last verification). Filter by type/section/tag/tier/status/work_status or words in `text`.
-        format: md (compact, grouped by section) | json | jsonl. Start here to find pages."""
+        format: md (compact, grouped by section) | json | jsonl. Start here to find pages.
+        write=true regenerates docs/catalog.md from page front matter instead of listing
+        (same as `kb catalog --write`; filters and format are ignored). Use it after adding or
+        editing pages rather than editing catalog.md rows by hand."""
+        if write:
+            return _run(repo, "catalog", "--write")
         args = ["catalog", "--format", format]
         for flag, value in (("--type", type), ("--section", section), ("--tag", tag), ("--tier", tier),
                             ("--status", status), ("--work-status", work_status), ("--text", text)):

@@ -31,7 +31,8 @@ See [Agent workflow](agent-workflow.md#precedence) for the full precedence order
 3. Set `generated` to yourself and the current time, and add `sources` for every claim
    that came from somewhere. Set `status` to `stable` when the page is complete, or
    `draft` while it is not ([conventions](../conventions.md#page-front-matter)).
-4. Add one line to [log.md](../log.md), run `tools/kb catalog --write`, then `tools/kb check`.
+4. Add one line to [log.md](../log.md), run `tools/kb catalog --write`
+   (MCP: `kb_catalog` with `write=true`), then `tools/kb check`.
    Give every page a precise `description` and tags; the catalog is how agents find it.
 5. Open a pull request. Merging does not wait for anyone to verify the pages.
 
