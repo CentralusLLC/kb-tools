@@ -28,8 +28,9 @@ Part of [epic 0010](../epic.md) ([plan](../plan.md)).
 The owner wants to keep the devenv manager and the the Paperclip host deployment in kb-tools, not delete them,
 so the public repository has to stop hard-coding Centralus' values (private IPs, ports,
 hostnames, internal MCP URLs) and read them from configuration instead. Environment variables
-are the preferred mechanism. Centralus' real values live outside the repository; Chief
-coordinates where (possibly Paperclip-side) and posts the answer before this item runs.
+are the preferred mechanism. Centralus' real values live outside the repository: non-secret
+values only in the untracked `.env` on the Paperclip host, secrets only in Paperclip secrets (decided
+2026-11-06; see Notes).
 
 Proposal:
 
@@ -59,6 +60,9 @@ Proposal:
 - [ ] Docs use placeholders and include one table of every variable.
 - [ ] Tests cover the defaults and environment overrides for both the devenv manager and
       `kb serve`.
+- [ ] Before merge, the exact list of variables the Paperclip host's `.env` needs (names and what each
+      holds, no values) is posted on the Paperclip task so the admin agent can write it on
+      the Paperclip host; anything needed on the Paperclip host or in Paperclip is requested through Chief.
 - [ ] The the Paperclip host deployment is verified working with its values supplied externally (record
       the check in the epic plan's Verification section).
 
@@ -66,7 +70,10 @@ Proposal:
 
 - Sequencing: after the 0010-11 audit (which lists what to make configurable) and before the
   0010-10 history rewrite, so the rewrite can replace the old values in history once.
-- Where Centralus' real values and any private deployment docs live is still open with the
-  owner; Chief will answer on CEN-14 before this item runs. Don't commit real values here.
+- Decided 2026-11-06 (owner via Chief, CEN-12/CEN-14): no private repository for now.
+  Centralus' real non-secret values (the Paperclip host IP, ports, host names, MCP address) live only in
+  the untracked `.env` on the Paperclip host; real secrets stay in Paperclip secrets. Nothing goes in any
+  repository. Internal-only deployment notes removed from the public docs go into a
+  Paperclip task document, not the repository.
 - Changing published ports or bind addresses on the Paperclip host affects live Paperclip connections
   (the devenv manager and kb-tools MCP URLs); verify both after redeploying.

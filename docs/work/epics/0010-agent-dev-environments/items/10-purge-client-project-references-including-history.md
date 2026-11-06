@@ -61,5 +61,6 @@ Known tree hits (2026-11-06):
   (so the rewrite can replace the old values in history too).
 - A rewrite changes every commit hash: the v0.1.0 tag, release notes and any links to
   commits need updating, and every clone must be re-cloned or hard-reset.
-- Open question: whether the leak guard's denylist lives in an untracked file, an
-  environment variable, or private deployment config.
+- Open question: whether the leak guard's denylist lives in an untracked file or an
+  environment variable. There is no private repository (decided 2026-11-06), so it must not
+  rely on one; if CI needs it, supply it as a secret.
