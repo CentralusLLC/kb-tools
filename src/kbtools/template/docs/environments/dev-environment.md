@@ -34,6 +34,9 @@ there, so nobody depends on an outside service to test.
 - **System packages** (apt): add them to `.devcontainer/Dockerfile` in a pull request, then call
   `devenv_rebuild` (it needs approval and uses the files in your workspace). If you are blocked
   now, `devenv_install` with a reason installs them at once (approval), but still make the pull request.
+- **Letting people test** (a dev server, a built app): start it inside the environment bound to
+  `0.0.0.0`, call `devenv_expose` with the port (approval), and post the internal address it
+  returns on the issue; an admin puts it on the private network over HTTPS.
 - **Rebuilds wait for you:** the container is replaced only after no agent session is running in
   it, so finish your run; the next run gets the new environment.
 

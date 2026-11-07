@@ -83,6 +83,27 @@ System packages: preferably a pull request to `.devcontainer/` followed by `deve
 the review is the approval; `devenv_install` (approval card) for urgent needs, persisted for
 rebuilds.
 
+## Previews: letting people test what an agent built
+
+An agent starts its server inside the dev container, bound to `0.0.0.0`, and calls
+`devenv_expose(project, port)` (approval card). The manager starts a small forwarder container
+(`devenv-PROJECT-preview-PORT`, `alpine/socat`) on the `devenv` network that publishes
+`<host-ip>:<port-range>` and reaches the dev container by name, so it survives rebuilds. An
+admin then puts it on the tailnet over HTTPS (root on the Paperclip host):
+
+```sh
+sudo tailscale serve --bg --https=<public port> http://<host-ip>:<preview port>
+sudo tailscale serve --https=<public port> off     # remove
+```
+
+`devenv_unexpose` stops a forwarder. Current previews (2026-11-06): gameworld world builder
+`5101 -> 22700` (https://<host>.<tailnet>.ts.net:5101/) and dungeon crawler `5102 -> 22701`
+(https://<host>.<tailnet>.ts.net:5102/). The dev container's own address (`172.17.x`) lives in
+agentdev's rootless network and is not reachable from the host.
+
+Rebuild swaps wait only for open SSH sessions (`sshd: agent`), not for servers an agent left
+running; those end with the old container and must be restarted.
+
 ## Operations
 
 ```sh

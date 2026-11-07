@@ -117,3 +117,27 @@ def test_build_default_image_writes_project_key(data_dir, monkeypatch):
     assert built == "default image"
     assert keys == ["ssh-ed25519 AAAA own\n"]
     assert commands[0][:4] == ["docker", "build", "-t", "devenv-p-base:latest"]
+
+
+def test_free_preview_port_skips_used_ports():
+    state = {"projects": {"a": {"previews": {"5101": 22700}}, "b": {"previews": {"5102": 22701}}, "c": {}}}
+    assert server._free_preview_port(state) == 22702
+
+
+def test_forwarder_targets_project_by_name(monkeypatch):
+    commands = []
+    monkeypatch.setattr(server, "_run", lambda cmd, *a, **k: commands.append(cmd))
+    monkeypatch.setattr(server.subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0, "", ""))
+    server._start_forwarder("gameworld", 5101, 22700)
+    cmd = commands[0]
+    assert f"{server.HOST_IP}:22700:8080" in cmd
+    assert cmd[-1] == "TCP:devenv-gameworld:5101"
+    assert cmd[cmd.index("--network") + 1] == server.NETWORK
+
+
+def test_busy_check_counts_ssh_sessions_only(monkeypatch):
+    seen = []
+    monkeypatch.setattr(server.subprocess, "run",
+                        lambda cmd, **k: seen.append(cmd) or subprocess.CompletedProcess(cmd, 1, b"", b""))
+    assert server._agent_busy("p") is False
+    assert seen[0][-2:] == ["-f", "^sshd: agent"]

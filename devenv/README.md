@@ -8,6 +8,8 @@ environment**. See epic 0010 in `docs/work/` and `docs/environments/agent-dev-en
   `kbdevenv/default/`; `devenv_rebuild` then builds the `.devcontainer/` (image or Dockerfile
   build, with target and args) from that synced worktree. The container is swapped only once no
   agent session is running in it.
+- **Previews:** `devenv_expose` publishes an app port through a small forwarder container on
+  `DEVENV_HOST_IP:<port-range>`; an admin serves it on the tailnet (`tailscale serve`).
 - **Per-project SSH keys:** `devenv_create` takes the public key; the agent stores the private
   half in Paperclip through an approved secret proposal.
 - Adds the **agent overlay** (`kbdevenv/overlay/`): sshd (key-only, user `agent`, no sudo),
