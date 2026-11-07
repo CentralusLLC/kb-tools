@@ -120,8 +120,10 @@ roadmap is current.
 1. **Propose:** `new-epic` and fill in `epic.md`: the business need and how success is measured.
 2. **Plan:** write `plan.md`, create the items, and set the epic to `planned`. A plan that
    changes architecture gets an ADR.
-3. **Deliver:** for each item, branch `NNNN-NN-slug`, then open a pull request titled
-   `[NNNN-NN] Title`. In that one pull request, change:
+3. **Deliver:** for each item, branch `NNNN-NN-slug` from `dev`, then open a pull request
+   into `dev` titled `[NNNN-NN] Title`; Chief merges it
+   ([Branches and pull requests](development.md#branches-and-pull-requests)). In that one
+   pull request, change:
    - the code and its tests ([Testing](testing.md));
    - the item file (`work_status: done`, acceptance criteria ticked);
    - any affected knowledge pages;
@@ -149,7 +151,8 @@ Each field has **one owner**, so systems never fight over it:
   outside the repository arrive as a list to triage. Accepting one means a pull request that
   adds or updates an item file.
 - **Pull requests close tracker issues** through their own keywords (`Closes #41`, Jira smart
-  commits), so the merge is the single moment work becomes done.
+  commits), so the merge into `dev` is the single moment work becomes done. (GitHub only acts
+  on these keywords in pull requests into the default branch, which is `dev`.)
 - Paperclip issues reference the item or plan file with a `workspace_file` link, so reviewers
   read the plan in place.
 

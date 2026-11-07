@@ -26,6 +26,8 @@ who use the product: what changed for them, not how it was built.
 
 ## Changed
 
+- [0012-01] Contributing: work pull requests now target `dev`, where Chief merges them; `main` is the release branch, changed only by board-approved release pull requests.
+
 ## Fixed
 
 ## Deprecated
