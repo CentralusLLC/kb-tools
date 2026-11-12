@@ -11,3 +11,4 @@ Template: `references/templates/decision.md`.
 | [0002](0002-docker-image-with-libreoffice.md) | One Docker image with LibreOffice, used as CLI and MCP server | Accepted |
 | [0003](0003-generated-files-markdown-with-on-demand-json.md) | Committed generated files are Markdown; machine output on demand | Accepted |
 | [0004](0004-repository-is-the-record-one-way-sync.md) | The repository is the record for work; trackers are synced one way | Accepted |
+| [0005](0005-dev-integration-branch-main-release-branch.md) | `dev` is the integration branch; `main` is the release branch | Accepted |

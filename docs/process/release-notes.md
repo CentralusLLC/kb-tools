@@ -37,6 +37,10 @@ By [item kind](work-tracking.md#item-kinds): `bug` goes under Fixed, `spike` get
 
 ## 2. When a release is cut
 
+A release is cut on `dev` and reaches `main` through a `dev` → `main` release pull request,
+which merges only with the board's approval
+([Branches and pull requests](development.md#releases-and-deployment)).
+
 1. Choose the version (semantic versioning: breaking changes raise the major number, new
    features the minor number, fixes the patch number) and create `releases/vX.Y.Z.md`
    (`type: Release Notes`, `version`, `released_at`).

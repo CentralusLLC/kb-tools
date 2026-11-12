@@ -37,9 +37,31 @@ there, so nobody depends on an outside service to test.
 - **Rebuilds wait for you:** the container is replaced only after no agent session is running in
   it, so finish your run; the next run gets the new environment.
 
+## kb-tools in the dev container
+
+The dev container has no Docker, so `tools/kb` uses a local kb-tools install instead of the
+Docker image. Install it once per container volume; it goes into `~/.kb-tools` in the
+container user's home (`/home/agent/.kb-tools` for agents), which persists across runs:
+
+```sh
+KB_TOOLS_SOURCE=git+https://github.com/<owner>/kb-tools tools/kb --install main
+tools/kb check
+```
+
+- `main` is kb-tools' release branch. Pass a tag or branch instead to pin another version;
+  run the same command again to update (it replaces the install).
+- The install needs Python 3.11 or later, git and network access, and credentials for the
+  kb-tools repository if it is private (an agent run's GitHub credentials work).
+- It is a full install (about 330 MB). `check`, `catalog`, `work`, `report`, `inventory` and
+  `log` work fully. `extract` and `figure` also use LibreOffice and fonts for some formats,
+  which this image doesn't have unless the project adds them.
+- `KB_TOOLS_HOME` changes the install location; `KB_TOOLS_REF` the default ref.
+
 ## Rules
 
 - Run the tests in the dev environment before every pull request ([Testing](../process/testing.md)).
   If you cannot (missing tools, wrong environment), fix the environment as above. Do not skip
   tests or push them to outside CI.
-- Never install tools outside `.devcontainer/` that the project then silently depends on.
+- Never install tools outside `.devcontainer/` that the project then silently depends on. The
+  kb-tools install above is the documented exception: it is knowledge-base tooling, not
+  something the project's build or tests depend on.
