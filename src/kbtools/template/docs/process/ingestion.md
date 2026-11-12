@@ -49,7 +49,8 @@ All steps use **kb-tools**, the shared knowledge-base toolkit. It runs in Docker
 LibreOffice and fonts built in, so results are the same on every machine:
 
 - **In a terminal or IDE:** `tools/kb <command>`. The wrapper is in this repository; the
-  `kb-tools:latest` image must be built once per machine. See [`tools/README.md`](../../tools/README.md).
+  `kb-tools:latest` image must be built once per machine, or, in a dev container without
+  Docker, kb-tools installed once with `tools/kb --install`. See [`tools/README.md`](../../tools/README.md).
 - **In Paperclip:** the `kb_*` MCP tools (`kb_inventory`, `kb_extract`, `kb_figure`, `kb_log`,
   `kb_check`, `kb_report`). Pass `repo` as the absolute path of your checkout.
 

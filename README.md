@@ -56,8 +56,24 @@ passes `kb check` cleanly, and that the template's `tools/kb` matches `bin/kb`.
 
 ## Use from a project
 
-Copy [`bin/kb`](bin/kb) into the project as `tools/kb`. It mounts the repository
-root into the container, runs as your user, and has no network access:
+Copy [`bin/kb`](bin/kb) into the project as `tools/kb`. With Docker and the
+`kb-tools:latest` image it mounts the repository root into the container, runs as your
+user, and has no network access.
+
+Without Docker (agent dev containers), it runs a local install in `~/.kb-tools` instead
+(the home directory from the password database, so it persists when a run's `$HOME` is
+temporary). Create or update that install once per container volume, at a branch or tag
+(default `main`):
+
+```sh
+KB_TOOLS_SOURCE=git+https://github.com/<owner>/kb-tools tools/kb --install main
+```
+
+It is a full install with every dependency (about 330 MB); `extract` and `figure` still need
+LibreOffice for Office files. `KB_TOOLS_HOME` and `KB_TOOLS_REF` override the location and
+default ref.
+
+Everyday use is the same either way:
 
 ```sh
 tools/kb init                                   # docs/sources (git-ignored), ingest log, extracted/

@@ -59,6 +59,53 @@ configurable → 0010-10 purge with a single history rewrite → 0010-12 license
    (0010-06) need a Paperclip policy.
 3. Then: template support (0010-07), and detecting projects without an environment (0010-08,
    through the agent workflow rule).
+4. kb CLI in project dev containers (0010-14, CEN-23): built as option a with a full install
+   (board, 2026-11-12); gameworld adopts it next.
+
+## kb CLI in project dev containers (0010-14)
+
+Board decision on CEN-5 (2026-11-07): agents inside a project's dev container must be able to
+run `kb check`, `kb catalog`, `kb work` and `kb report` on that repository. `tools/kb` needs
+Docker, which dev containers lack by design, and the kb-tools MCP server reads only host paths.
+The install mechanism needs the board's choice (CEN-23) before building.
+
+Facts checked 2026-11-07 in the kb-tools dev container:
+
+- `check`, `catalog`, `work` and `report` run with only PyYAML installed. A full install
+  (markitdown, pdfium, magika and so on) is 326 MB and 42 packages; PyYAML alone is 17 MB.
+  `extract` and `figure` also need LibreOffice and fonts, which project images don't have.
+- `pip install git+https://github.com/CentralusLLC/kb-tools@<ref>` works in a container run
+  through Paperclip's GitHub credentials (13 s for a full install).
+- In a Paperclip run, `$HOME` is a per-run temporary directory. `/home/agent` is the persistent
+  volume. A default `uv tool install` or `pip install --user` would therefore be lost after the
+  run and isn't on `PATH`, so a run-time install must name its location explicitly.
+
+Options:
+
+| Option | How | Works today | Cost |
+| --- | --- | --- | --- |
+| a. Run-time install | The template's dev-environment page documents one command that installs kb-tools into a venv on the persistent home volume (`/home/agent/.kb-tools`), pinned to a ref (`main`, the release branch, by default). The template's `tools/kb` uses that install when Docker is missing, so `tools/kb check` works on the host and in the container. | Yes | Each agent runs one step once per container volume. Updates are manual (re-run with a new ref). |
+| b. Build-time install | One `RUN pip install ...` line in the template's `.devcontainer/Dockerfile`. | No: the repository is private and the image build has no GitHub credential. Possible after 0010-10..13. | Pinned at image build; a rebuild updates it. |
+| c. Published package or image | Install from PyPI or GHCR (epic 0002). | No | Needs release and versioning work first. |
+| d. Vendor into each project | Copy kb-tools' source into the project repository. | Yes | Rejected: copies drift and every project carries kb-tools code. |
+
+Light install: rather than changing kb-tools' dependencies now, install with `--no-deps` plus
+PyYAML. That needs no packaging change. A test then guards that `check`, `catalog`, `work` and
+`report` import without the extraction dependencies. A proper `kb-tools[extract]` extra
+belongs with packaging in epic 0002.
+
+Proposal: a now, with the light install. When the repository is public, add b as the same
+command moved into the template Dockerfile, with no credential needed. Move to c with epic 0002.
+
+Board decision (CEN-23, 2026-11-12): option a; no light install, a full install with every
+dependency; default ref `main`.
+
+Built: `tools/kb` (= `bin/kb`) uses the Docker image when Docker has it, otherwise
+`$KB_TOOLS_HOME/bin/kb`. `tools/kb --install [ref]` creates that install: a venv (recreated
+each time) with `pip install $KB_TOOLS_SOURCE@<ref>`. `KB_TOOLS_HOME` defaults to `.kb-tools`
+in the user's home from the password database (`/home/agent` in agent containers), not
+`$HOME`. The source URL comes from `KB_TOOLS_SOURCE` because the template stays free of
+deployment values. The template's dev-environment page documents the step.
 
 ## Risks and open questions
 
@@ -85,5 +132,9 @@ configurable → 0010-10 purge with a single history rewrite → 0010-12 license
 - 2026-11-05: from the Paperclip container, SSH as `agent` reached the kb-tools dev container,
   which has node 22, Claude Code 2.1.318, git and LibreOffice and no sudo; `python -m pytest`
   passed 18 tests in 5.5 s.
+- 2026-11-12 (0010-14), in the kb-tools dev container without Docker: a freshly scaffolded
+  project ran `tools/kb --install` from GitHub `main` with the run's credentials (17 s,
+  326 MB, kb-tools 0.1.0), then `tools/kb check` (0 errors, 0 warnings), `work list`,
+  `catalog` and `report` through the local install.
 - Still to verify: an agent run through the registered Paperclip environment executes there and
   its commits come back.

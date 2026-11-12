@@ -4,16 +4,23 @@ Scripts that agents and people run instead of writing one-off code.
 
 ## kb (knowledge-base tools)
 
-`tools/kb` runs the shared **kb-tools** Docker image (the `kb-tools`
-repository) against this repository. It handles document ingestion (inventory,
-extraction, renders, figures, ingest log) and knowledge-base checks and trust reports.
-Its only requirement is Docker.
+`tools/kb` runs the shared **kb-tools** (the `kb-tools` repository) against this
+repository. It handles document ingestion (inventory, extraction, renders, figures, ingest
+log) and knowledge-base checks and trust reports. It uses the kb-tools Docker image when
+Docker has it, and otherwise a local install (dev containers, which have no Docker).
 
-One-time setup per machine:
+One-time setup per machine with Docker:
 
 ```sh
 git clone <kb-tools repository> ~/workspace/kb-tools
 docker build -t kb-tools:latest ~/workspace/kb-tools
+```
+
+One-time setup in a dev container (no Docker; see
+[Dev environment](../docs/environments/dev-environment.md#kb-tools-in-the-dev-container)):
+
+```sh
+KB_TOOLS_SOURCE=git+https://github.com/<owner>/kb-tools tools/kb --install main
 ```
 
 Everyday use, from anywhere in this repository:
