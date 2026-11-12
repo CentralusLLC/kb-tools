@@ -53,12 +53,13 @@ See [Agent dev environments](../../../environments/agent-dev-environments.md):
 Public-release prep (first): 0010-11 audit → 0010-13 make deployment-specific settings
 configurable → 0010-10 purge with a single history rewrite → 0010-12 license.
 
-1. Done: account (0010-01), overlay (0010-02), kb-tools dev target (0010-04).
-2. In progress: the manager (0010-03) now builds from the synced worktree; the SSH trial
-   (0010-05) passed by hand and still needs Paperclip registration; approval-gated installs
-   (0010-06) need a Paperclip policy.
-3. Then: template support (0010-07), and detecting projects without an environment (0010-08,
-   through the agent workflow rule).
+1. Done: account (0010-01), overlay (0010-02), kb-tools dev target (0010-04), the manager
+   (0010-03, deployed and used through Paperclip), the SSH trial (0010-05, CEN-6), and
+   detecting projects without an environment (0010-08, through the agent workflow rule).
+2. Blocked: approval-gated installs (0010-06). "Ask first" is set, but Paperclip doesn't
+   enforce it (CEN-8, a Paperclip platform problem).
+3. To do: a scaffold test for the template's `.devcontainer/` (0010-07); the template files
+   are done.
 4. kb CLI in project dev containers (0010-14, CEN-23): built as option a with a full install
    (board, 2026-11-12); gameworld adopts it next.
 
@@ -136,5 +137,5 @@ deployment values. The template's dev-environment page documents the step.
   project ran `tools/kb --install` from GitHub `main` with the run's credentials (17 s,
   326 MB, kb-tools 0.1.0), then `tools/kb check` (0 errors, 0 warnings), `work list`,
   `catalog` and `report` through the local install.
-- Still to verify: an agent run through the registered Paperclip environment executes there and
-  its commits come back.
+- 2026-11-05 (0010-05, CEN-6): an agent run through the registered Paperclip SSH environment
+  executed in `devenv-kb-tools`, passed 18 tests and pushed its commit (`7e79ded`) back.

@@ -34,3 +34,7 @@ Versioning, changelog and tagging for kb-tools itself, following its own release
 ## Notes
 
 See the epic plan for approach and risks.
+
+- From epic 0012's retrospective (2026-11-12): protect `main` with GitHub branch protection
+  (only release pull requests from `dev`, approved by the board). GitHub Free can't protect
+  private repositories, so this becomes possible once kb-tools is public (0010-10..12).

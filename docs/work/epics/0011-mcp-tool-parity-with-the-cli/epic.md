@@ -5,7 +5,7 @@ title: "MCP tool parity with the CLI"
 description: "Agents that use kb-tools through MCP can do what the kb CLI does, so they stop hand-editing generated files."
 tags: [epic]
 status: draft
-work_status: in_progress
+work_status: done
 priority: low
 owner: ""
 target: ""
@@ -45,13 +45,20 @@ calls the tool through the MCP server.
 
 ## Acceptance
 
-> TODO: Who accepts the outcome (see stakeholders in project management), and how
-> (demo, review of success measures). Record the acceptance here when the epic closes.
+The board accepts. Success measure checked on 2026-11-12: the one gap reported (Paperclip
+CEN-10, `kb_catalog` couldn't write) is closed by [0011-01](items/01-kb-catalog-mcp-tool-can-write-docs-catalog-md.md),
+merged in PR #2, and `test_mcp_kb_catalog_write_regenerates_catalog` calls the tool through
+the MCP server. No other gaps have been reported. The board asked for completed epics to be
+closed (CEN-12, CEN-33); closed in [0012-02](../0012-development-workflow/items/02-reconcile-work-item-statuses-with-delivered-work.md).
 
 ## Retrospective
 
-> TODO (fill in when the epic closes): what worked, what didn't, and actions. Each action
-> becomes a work item, a change to a process page, or an ADR.
+- Worked: an agent reported the gap from real use (CEN-10), and one small item with an
+  MCP-level test closed it.
+- Didn't: the epic was open-ended ("further gaps as agents report them"), so it had no
+  natural end and stayed `in_progress` after its only item was done.
+- Action: no new item. Report future MCP gaps as items in a new epic, not by reopening this
+  one.
 
 ## Related
 
