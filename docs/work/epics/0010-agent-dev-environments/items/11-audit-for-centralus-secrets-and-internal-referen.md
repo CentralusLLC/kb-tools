@@ -59,7 +59,7 @@ and `tests/test_kb.py`. The working tree has no local-LLM hits; history has not 
 Kinds and locations only. The values, with the history replacement list for 0010-10, are in
 the Paperclip task document `audit-findings` on CEN-34.
 
-Scanned: the tree on `dev` at `7c72bb2`, and the full history (all branches, pull request
+Scanned: the tree on `dev` at `2b46104`, and the full history (all branches, pull request
 refs and the v0.1.0 tag, 32 commits) with gitleaks 8.30.1 and with `git log -G` for each kind.
 
 **Secrets:** gitleaks found none in the tree or history, so nothing needed rotating. The only

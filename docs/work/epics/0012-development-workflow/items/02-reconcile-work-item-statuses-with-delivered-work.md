@@ -44,7 +44,7 @@ Changes (2026-11-12):
 | Item | Old | New | Evidence |
 | --- | --- | --- | --- |
 | 0010-03 | in_progress | done | Deployed since 2026-11-05 and used by Chief through Paperclip (CEN-5, CEN-11) |
-| 0010-05 | in_progress | done | CEN-6 done: 18 tests passed in `devenv-kb-tools`, commit `7e79ded` pushed back |
+| 0010-05 | in_progress | done | CEN-6 done: 18 tests passed in `devenv-kb-tools`, commit `0df7159` pushed back |
 | 0010-06 | in_progress | blocked | "Ask first" set but bypassed by Paperclip (CEN-8, backlog) |
 | 0010-07 | in_progress | todo | Template files on `dev`; the scaffold test is missing and nobody is working on it |
 | 0010-08 | in_progress | done | Template workflow rule and create steps; gameworld environment created (CEN-11) |

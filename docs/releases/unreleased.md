@@ -25,7 +25,7 @@ who use the product: what changed for them, not how it was built.
 - [0010-14] `tools/kb` works in dev containers without Docker: `tools/kb --install` sets up a local kb-tools install (default ref `main`) that persists in the agent's home, and the template's dev-environment page documents it.
 - [0010-13] Guide for installing kb-tools as an add-on in any Paperclip environment (`docs/environments/paperclip-add-on.md`), and one table of every setting (`docs/environments/configuration.md`).
 - [0010-13] MCP tools accept a repository name (`repo=gameworld` or `owner/gameworld`), looked up under the server's `KB_REPOS_ROOT` (default `/repos`).
-- [0010-13] `kb --version` shows the git ref and commit it was installed from, for example `0.1.0+dev.3061f26`.
+- [0010-13] `kb --version` shows the git ref and commit it was installed from, for example `0.1.0+dev.b3e23c9`.
 - [0010-11] `kb check` scans tracked files for secrets (errors) and private or tailnet addresses (warnings), with an optional deny list outside the repository (`KB_SCAN_DENYLIST`) for organisation-specific names.
 - [0010-15] `kb scaffold --tools-only` upgrades a project's `tools/kb` to the installed version's and adds a missing `tools/kb.conf`; the add-on guide has an upgrade section.
 - [0010-12] kb-tools is MIT-licensed (`LICENSE`, package metadata and the image's `org.opencontainers.image.licenses` label). Third-party licences are listed in `docs/architecture/third-party-licences.md`; projects created with `kb scaffold` choose their own licence.

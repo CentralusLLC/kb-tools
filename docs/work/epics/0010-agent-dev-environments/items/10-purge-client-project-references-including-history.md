@@ -46,15 +46,15 @@ Known tree hits (2026-11-06):
 
 ## Acceptance criteria
 
-- [ ] `git grep -i` for the client-project name (deny-list entry) is empty, and `kb check` with
+- [x] `git grep -i` for the client-project name (deny-list entry) is empty, and `kb check` with
       `KB_SCAN_DENYLIST` set reports no deny-list hit.
-- [ ] `git log --all -p -i -G <name>` is empty after a `git filter-repo` rewrite
+- [x] `git log --all -p -i -G <name>` is empty after a `git filter-repo` rewrite
       (`--replace-text` and `--replace-message`) over all branches and tags, including v0.1.0.
 - [x] The template-leak guard still works without naming internal projects in the repository
       (for example an untracked or environment-supplied denylist).
-- [ ] The owner explicitly approves the force-push before it happens.
+- [x] The owner explicitly approves the force-push before it happens.
 - [ ] Open PRs, other clones (the Paperclip host's sidecar, agent workspaces, dev containers) and the v0.1.0
-      provenance (commit 449e64f) are listed, and each is handled (rebased, re-cloned or
+      provenance (commit 449e64f, now b22e03b) are listed, and each is handled (rebased, re-cloned or
       re-tagged).
 
 ## Notes
@@ -78,5 +78,21 @@ Two steps, both for board review through Chief:
    - the template-leak guard in `tests/test_kb.py` applies the generic scan rules and, when `KB_SCAN_DENYLIST` is set, the deny list. It no longer names anything.
 2. **History rewrite.** This is prepared and verified on a copy and reported on CEN-34. It is **not pushed**: the force-push of `main`, `dev` and the tags waits for the board's explicit approval.
    - It uses the `--replace-text` list from the 0010-11 audit, so the history findings are removed in the same single rewrite.
-   - Rewriting commit author e-mails (`.mailmap`) is a separate slot in the rewrite. It is left out until the board decides (CEN-12).
+   - The board decided (CEN-40) to rewrite the commit author e-mails to the GitHub no-reply
+     address with `--mailmap` in the same rewrite, and to keep the display name.
+3. **Force-push (2026-11-13, approved by the board on CEN-12).** The rewrite was re-run on a fresh
+   mirror and gave exactly the approved commits, then pushed atomically with a lease on every ref:
+   - `dev` a37b076 → c6d2556, `main` fbbb800 → a62e948, tag `v0.1.0` 449e64f → b22e03b.
+   - `0010-agent-dev-environments` is kept (rewritten; its `[0010-03]` commit is not on `dev`).
+     The other ten merged work branches are deleted.
+   - The deny-list audit over all refs of a fresh clone is 0. Author and committer e-mails are only
+     the GitHub no-reply addresses.
+   - This pull request updates the commit ids cited in the docs.
+
+Still open before this item is done:
+- GitHub Support has to remove the cached `refs/pull/*` of PRs #1–#14, which still point at the
+  old commits. This must happen before the repository is made public.
+- Every older clone is re-cloned or hard-reset: the Paperclip host's sidecar (rebuild from the new
+  `main`, which also refreshes the v0.1.0 provenance), agent workspaces, the `devenv-kb-tools`
+  container, and gameworld's `tools/kb` install (`tools/kb --install` again).
 

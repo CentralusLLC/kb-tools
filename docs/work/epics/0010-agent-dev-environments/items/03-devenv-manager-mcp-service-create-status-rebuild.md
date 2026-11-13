@@ -40,7 +40,7 @@ The manager gives agents lifecycle tools behind Paperclip approval cards.
 
 ## Notes
 
-- Deployed on the Paperclip host since 2026-11-05 at commit `3e1a2db` (Paperclip CEN-5). Chief has since
+- Deployed on the Paperclip host since 2026-11-05 at commit `9ce34cb` (`3e1a2db` before the 2026-11-13 history rewrite) (Paperclip CEN-5). Chief has since
   called `devenv_status`, `devenv_create`, `devenv_delete` and `devenv_rebuild` through the
   Paperclip MCP connection, for kb-tools and gameworld (CEN-5, CEN-11). Agent runs for both
   projects execute inside the containers it built (`devenv-kb-tools`, `devenv-gameworld`).

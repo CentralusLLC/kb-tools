@@ -29,7 +29,7 @@ Question: can a Paperclip agent run the kb-tools test suite inside its remote de
 through a Paperclip SSH environment, and push its commits back to GitHub?
 
 Answer: **yes** (Paperclip CEN-6, done 2026-11-05). The run below passed 18 tests in the dev
-container and pushed commit `7e79ded` from it. Agent runs in the kb-tools project still execute
+container and pushed commit `0df7159` from it. Agent runs in the kb-tools project still execute
 in that container (`devenv-kb-tools`).
 
 ## Acceptance criteria
@@ -52,7 +52,7 @@ The kb-tools Developer agent ran this through Paperclip's SSH environment:
   the Dockerfile `dev` stage (PyYAML, python-docx, python-pptx, openpyxl, Pillow, mcp and
   `soffice` present). `pip show kb-tools`: not installed in the image.
 - **Branch:** `git fetch origin` through the Paperclip GitHub broker worked. Checked out
-  `0010-agent-dev-environments` at `1a46eca`.
+  `0010-agent-dev-environments` at `779bc5f`.
 - **Tests:** `python -m pytest -q -p no:cacheprovider` → **18 passed, 0 failed, 0 skipped**
   in 9.88s (wall time 11.0s). LibreOffice tests ran; nothing was skipped.
 - **Workspace import:** a probe test run with the repository's pytest config printed

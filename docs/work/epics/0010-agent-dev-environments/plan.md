@@ -138,4 +138,4 @@ deployment values. The template's dev-environment page documents the step.
   326 MB, kb-tools 0.1.0), then `tools/kb check` (0 errors, 0 warnings), `work list`,
   `catalog` and `report` through the local install.
 - 2026-11-05 (0010-05, CEN-6): an agent run through the registered Paperclip SSH environment
-  executed in `devenv-kb-tools`, passed 18 tests and pushed its commit (`7e79ded`) back.
+  executed in `devenv-kb-tools`, passed 18 tests and pushed its commit (`0df7159`) back.

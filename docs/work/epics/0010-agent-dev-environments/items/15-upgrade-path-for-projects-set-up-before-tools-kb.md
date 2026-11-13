@@ -25,7 +25,7 @@ Part of [epic 0010](../epic.md) ([plan](../plan.md)).
 
 ## What and why
 
-The gameworld Developer reinstalled gameworld from `dev` at `b9aa775` using only the add-on
+The gameworld Developer reinstalled gameworld from `dev` at `d9a7d0f` using only the add-on
 guide (CEN-35, gameworld PR #12). 0010-13 and 0010-11 work in a project container; four
 findings remain against them:
 
@@ -55,7 +55,7 @@ findings remain against them:
       and add-on guide say so.
 - [x] The add-on guide has an upgrade section that a project can follow from its container.
 - [x] The gameworld Developer confirms the upgrade path on CEN-35 once this is on `dev`
-      (confirmed on `dev` `7f84de1`, gameworld PR #13).
+      (confirmed on `dev` `f91a118`, gameworld PR #13).
 
 ## Notes
 
