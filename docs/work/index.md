@@ -24,4 +24,5 @@ generated (`tools/kb work index`), so do not edit between the markers.
 | [0010](epics/0010-agent-dev-environments/epic.md) | Agent dev environments | in_progress | critical | 10/16 |  |
 | [0011](epics/0011-mcp-tool-parity-with-the-cli/epic.md) | MCP tool parity with the CLI | done | low | 1/1 |  |
 | [0012](epics/0012-development-workflow/epic.md) | Development workflow | done | medium | 2/2 | paperclip: CEN-12 |
+| [0013](epics/0013-work-tracking-checks/epic.md) | Work tracking checks | planned | high | 0/8 | paperclip: CEN-50 |
 <!-- kb:work-index:end -->
