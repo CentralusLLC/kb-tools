@@ -7,7 +7,7 @@ description: "Find Centralus secrets and internal references (local LLM endpoint
 tags: [work-item]
 status: draft
 kind: task
-work_status: in_review
+work_status: done
 priority: critical
 depends_on: []
 links: 

@@ -7,7 +7,7 @@ description: "Fix the issues found by gameworld's reinstall check of 0010-13 and
 tags: [work-item]
 status: draft
 kind: bug
-work_status: in_review
+work_status: done
 priority: critical
 depends_on: ["0010-13", "0010-11"]
 links: 
@@ -54,7 +54,8 @@ findings remain against them:
       `.paperclip-runtime/`; a tracked file there is still scanned (tests). The security page
       and add-on guide say so.
 - [x] The add-on guide has an upgrade section that a project can follow from its container.
-- [ ] The gameworld Developer confirms the upgrade path on CEN-35 once this is on `dev`.
+- [x] The gameworld Developer confirms the upgrade path on CEN-35 once this is on `dev`
+      (confirmed on `dev` `7f84de1`, gameworld PR #13).
 
 ## Notes
 
