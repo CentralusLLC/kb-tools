@@ -18,7 +18,7 @@ and project conventions, and knowledge stays in the repository where every agent
 
 ## Goals
 
-- **One shared toolkit** instead of per-repository scripts (client-project already had two diverging copies).
+- **One shared toolkit** instead of per-repository scripts (an earlier project already had two diverging copies).
 - **Faithful ingestion:** text, page and slide renders, structure, figures and diagrams, with provenance.
 - **Repository as the record** for knowledge, plans, work items and release notes; outside
   trackers are views.

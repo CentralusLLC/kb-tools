@@ -8,8 +8,8 @@ the knowledge base, and checks and reports on the knowledge base's trust.
 It runs in Docker, so it works the same on a laptop, in CI, and next to Paperclip
 agents. The image bundles LibreOffice and a font set for faithful rendering.
 
-The method behind it (preserve, extract, render, reconcile, normalise, write) comes from
-the client-project extraction guide. Each project documents it in `docs/process/ingestion.md`.
+The method behind it (preserve, extract, render, reconcile, normalise, write) was
+worked out on earlier projects. Each project documents it in `docs/process/ingestion.md`.
 
 ## Build
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import datetime, timezone
 
 from conftest import make_docx, make_pdf, make_png, make_pptx, make_xlsx, needs_soffice
@@ -188,10 +189,33 @@ def test_scaffold_installs_clean_generic_bundle(tmp_path):
     assert header.split(",") == ingest_log.COLUMNS
     errors, warnings = run_checks(Repo(tmp_path))
     assert errors == [] and warnings == [], errors + warnings
-    words = ("gameworld", "centralus", "phaser", "creature")
+    # Template leak guard. The generic scan rules always apply; organisation-specific names
+    # (projects, people, hosts) come only from the deny list outside the repository, so this
+    # test never has to spell them out.
+    from kbtools import scan
+
+    rules = list(scan.BUILTIN_RULES)
+    if os.environ.get(scan.DENYLIST_ENV):
+        extra, problems = scan.load_denylist(Path(os.environ[scan.DENYLIST_ENV]).expanduser())
+        assert problems == [], problems
+        rules += extra
     for name, node in template_files():
-        text = node.read_bytes().decode("utf-8", "ignore").lower()
-        assert not any(w in text for w in words), name
+        text = node.read_bytes().decode("utf-8", "ignore")
+        hits = [rule.name for rule in rules if rule.pattern.search(text)]
+        assert not hits, (name, hits)
+
+
+def test_template_leak_guard_uses_the_deny_list(tmp_path, monkeypatch):
+    from kbtools import scan
+    from kbtools.scaffold import template_files
+
+    name, node = next((n, f) for n, f in template_files() if n.endswith(".md"))
+    word = node.read_bytes().decode("utf-8", "ignore").split()[0]
+    denylist = tmp_path / "deny.txt"
+    denylist.write_text("# test\n" + re.escape(word) + "\n")
+    rules, problems = scan.load_denylist(denylist)
+    assert problems == [] and rules
+    assert any(rule.pattern.search(node.read_bytes().decode("utf-8", "ignore")) for rule in rules), name
 
 
 def test_scaffold_never_overwrites(tmp_path):

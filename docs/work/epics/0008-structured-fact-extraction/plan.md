@@ -16,7 +16,7 @@ generated:
 
 ## Approach
 
-Port the client-project LangExtract tool as an optional extra (`kb-tools[facts]`), reading pages.md and text.md from packages and writing JSON with citations.
+Port an earlier project's LangExtract tool as an optional extra (`kb-tools[facts]`), reading pages.md and text.md from packages and writing JSON with citations.
 
 ## Design
 
