@@ -27,6 +27,7 @@ who use the product: what changed for them, not how it was built.
 - [0010-13] MCP tools accept a repository name (`repo=gameworld` or `owner/gameworld`), looked up under the server's `KB_REPOS_ROOT` (default `/repos`).
 - [0010-13] `kb --version` shows the git ref and commit it was installed from, for example `0.1.0+dev.3061f26`.
 - [0010-11] `kb check` scans tracked files for secrets (errors) and private or tailnet addresses (warnings), with an optional deny list outside the repository (`KB_SCAN_DENYLIST`) for organisation-specific names.
+- [0010-15] `kb scaffold --tools-only` upgrades a project's `tools/kb` to the installed version's and adds a missing `tools/kb.conf`; the add-on guide has an upgrade section.
 - [0011-01] The `kb_catalog` MCP tool can regenerate `docs/catalog.md` (`write=true`), like `kb catalog --write`.
 
 ## Changed
@@ -38,6 +39,10 @@ who use the product: what changed for them, not how it was built.
 - [0012-01] Contributing: work pull requests now target `dev`, where Chief merges them; `main` is the release branch, changed only by board-approved release pull requests.
 
 ## Fixed
+
+- [0010-15] `tools/kb --install` finds the source of an install made before `tools/kb.conf` existed, and says when the project's `tools/kb` is older than the installed one.
+- [0010-15] `kb scaffold` records the ref kb-tools was installed from in `tools/kb.conf` (for example `dev`), instead of always `main`.
+- [0010-15] The `kb check` scan skips untracked files in Paperclip's `.paperclip-runtime/` folder (a file committed there is still scanned), so agent workspaces no longer get a warning; the docs now say untracked, not ignored files are scanned.
 
 ## Deprecated
 

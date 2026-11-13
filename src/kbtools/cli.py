@@ -31,13 +31,25 @@ def cmd_scaffold(args) -> int:
             target = Path.cwd()
     if not (target / ".git").exists():
         print(f"note: {target} is not a git repository root; scaffolding there anyway")
-    result = scaffold(target, project=args.project, actor=args.by, dry_run=args.dry_run)
+    if not args.project and not args.tools_only:
+        print("error: kb scaffold needs --project <name> (or --tools-only to refresh tools/kb)", file=sys.stderr)
+        return 2
+    result = scaffold(target, project=args.project or "", actor=args.by, dry_run=args.dry_run,
+                      tools_only=args.tools_only)
     verb = "would create" if args.dry_run else "created"
+    update = "would update" if args.dry_run else "updated"
     for path in result["created"]:
         print(f"{verb} {path}")
+    for path in result["updated"]:
+        print(f"{update} {path}")
     for path in result["skipped"]:
         print(f"exists, kept {path}")
-    print(f"{len(result['created'])} {verb.split()[-1]}, {len(result['skipped'])} kept")
+    print(f"{len(result['created'])} {verb.split()[-1]}, {len(result['updated'])} {update.split()[-1]}, "
+          f"{len(result['skipped'])} kept")
+    if args.tools_only:
+        if result["created"] or result["updated"]:
+            print("Commit the changed tools/ files in a pull request.")
+        return 0
     kept_pointers = [p for p in ("AGENTS.md", "CLAUDE.md", ".github/copilot-instructions.md") if p in result["skipped"]]
     if kept_pointers:
         print("\nThese agent files already existed and were not changed: " + ", ".join(kept_pointers))
@@ -231,7 +243,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("scaffold", help="install the generic knowledge-base layout (docs/, AGENTS.md, tools/kb, ...) without overwriting")
-    p.add_argument("--project", required=True, help="project name used in the pages")
+    p.add_argument("--project", help="project name used in the pages (required unless --tools-only)")
+    p.add_argument("--tools-only", action="store_true",
+                   help="only replace tools/kb with this version's wrapper and add tools/kb.conf if missing "
+                        "(to upgrade a project scaffolded by an older kb-tools)")
     p.add_argument("--by", default=f"kb-tools/{__version__}", help="actor recorded in generated: (default kb-tools/<version>)")
     p.add_argument("--dry-run", action="store_true", help="list what would be created")
     p.set_defaults(func=cmd_scaffold)

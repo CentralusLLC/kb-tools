@@ -43,13 +43,31 @@ def _from_install_record() -> tuple[str, str] | None:
     return vcs.get("requested_revision", ""), vcs["commit_id"]
 
 
-def install_source() -> str:
-    """The pip source this kb-tools was installed from (`git+<url>`), or the public repository."""
+def _install_record() -> dict:
     try:
         raw = metadata.distribution("kb-tools").read_text("direct_url.json")
-        data = json.loads(raw) if raw else {}
+        return json.loads(raw) if raw else {}
     except (metadata.PackageNotFoundError, ValueError):
-        data = {}
+        return {}
+
+
+def install_ref() -> str:
+    """The git ref this kb-tools was installed from (`pip install git+...@<ref>`), or `main`.
+
+    `kb scaffold` writes it to tools/kb.conf, so a project scaffolded from a `dev` install
+    keeps installing `dev` instead of a `main` that may not have the same features yet.
+    """
+    data = _install_record()
+    vcs = data.get("vcs_info") or {}
+    ref = (vcs.get("requested_revision") or "").strip()
+    if vcs.get("vcs") == "git" and re.fullmatch(r"[A-Za-z0-9._/-]+", ref):
+        return ref
+    return "main"
+
+
+def install_source() -> str:
+    """The pip source this kb-tools was installed from (`git+<url>`), or the public repository."""
+    data = _install_record()
     url = data.get("url", "")
     if (data.get("vcs_info") or {}).get("vcs") == "git" and url and "@" not in url.split("://", 1)[-1]:
         return "git+" + url

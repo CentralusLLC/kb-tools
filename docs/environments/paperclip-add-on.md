@@ -103,10 +103,26 @@ kb scaffold --project <name>     # never overwrites existing files
 ```
 
 This adds the knowledge base (`docs/`), the agent instructions (`AGENTS.md`, `CLAUDE.md`),
-`tools/kb` and `tools/kb.conf`, which records where kb-tools is installed from
-(`source=`, `ref=`). Commit them in a pull request. A project scaffolded before `tools/kb.conf`
-existed can run `kb scaffold` again to add it, and copy the current `tools/kb` from kb-tools'
-`bin/kb`.
+`tools/kb` and `tools/kb.conf`, which records where kb-tools is installed from: `source=`,
+and `ref=`, the branch or tag the scaffolding kb-tools was installed from (`main` if
+unknown). Commit them in a pull request.
+
+### Upgrading a project set up by an older kb-tools
+
+A project scaffolded before `tools/kb.conf` existed, or with an older `tools/kb`, upgrades in
+its container in two steps, then commits the changed `tools/` files in a pull request:
+
+```sh
+tools/kb --install <ref>          # e.g. main, dev or a tag; installs the new kb-tools
+tools/kb scaffold --tools-only    # replaces tools/kb, adds tools/kb.conf if missing
+```
+
+The new install's `--install` finds the source in `KB_TOOLS_SOURCE`, `tools/kb.conf`, the
+last install's record, or pip's record of an existing install. If none of those has it
+(an old wrapper with no install yet), pass it once:
+`KB_TOOLS_SOURCE=git+https://github.com/<owner>/kb-tools tools/kb --install <ref>`.
+`--tools-only` changes nothing else, and `tools/kb --install` says when the project's
+`tools/kb` is older than the installed one.
 
 ## 4. Install the light tools in each project container
 
@@ -129,6 +145,11 @@ tools/kb check
   need LibreOffice and fonts for some formats.
 - The install needs Python 3.11 or later, git, network access, and read access to the
   kb-tools repository if it is private.
+- `kb check` scans tracked files, and untracked files git does not ignore, for secrets and
+  deployment-specific values (see the project's `docs/process/security.md`). It skips
+  untracked files in Paperclip's `.paperclip-runtime/` folder in agent workspaces (a file
+  committed there is still scanned); git-ignore any other local
+  folder that holds deployment values.
 - `docs/sources/` is empty in a fresh clone because originals never go into git. `kb check`
   treats an ingested source that is not present locally as normal; it still checks the
   source's outputs, and warns when a present file differs from the logged hash.

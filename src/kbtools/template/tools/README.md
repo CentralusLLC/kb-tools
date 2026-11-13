@@ -42,8 +42,14 @@ Agents on the Paperclip machine (such as the agent that ingests documents) have 
 commands as `kb_*` MCP tools; those tools only see checkouts on that machine, so agents in
 this project's containers use `tools/kb`.
 
-`tools/kb` is copied from `kb-tools/bin/kb`; update it from there. `tools/kb.conf` says where
-`tools/kb --install` gets kb-tools from (`source=`) and which ref (`ref=`).
+`tools/kb.conf` says where `tools/kb --install` gets kb-tools from (`source=`) and which ref
+(`ref=`). `tools/kb` comes from kb-tools; to upgrade both, install the new version and let it
+replace the wrapper, then commit the change in a pull request:
+
+```sh
+tools/kb --install <ref>
+tools/kb scaffold --tools-only    # replaces tools/kb, adds tools/kb.conf if missing
+```
 
 ## Adding a tool
 

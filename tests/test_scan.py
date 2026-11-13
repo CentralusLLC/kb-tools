@@ -105,3 +105,35 @@ def test_kb_check_runs_the_scan(repo):
     (repo.docs / "setup.md").write_text("---\ntype: Guide\n---\n# Setup\n\nManager at 10.9" + ".8.7:9000.\n")
     _, warnings = run_checks(Repo(repo.root))
     assert "docs/setup.md:6: private IPv4 address (use a placeholder or a setting)" in warnings
+
+
+def test_untracked_files_are_scanned_but_not_paperclip_runtime(tmp_path):
+    """Untracked, not ignored files are scanned (caught before a commit); Paperclip's per-run
+    .paperclip-runtime/ folder is not (gameworld feedback 18)."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "index.md").write_text('---\nokf_version: "0.2"\n---\n\n# Test\n')
+    address = "10.1" + ".2.3"
+    (tmp_path / "notes.md").write_text(f"host {address}\n")
+    runtime = tmp_path / ".paperclip-runtime" / "mcp"
+    runtime.mkdir(parents=True)
+    (runtime / "config.json").write_text(f'{{"url": "http://{address}:9000"}}\n')
+    _, warnings = scan(Repo(tmp_path))
+    assert [w.split(":")[0] for w in warnings] == ["notes.md"]
+
+
+def test_tracked_file_in_paperclip_runtime_is_still_scanned(tmp_path):
+    """Only untracked files in .paperclip-runtime/ are skipped: a file committed there by
+    mistake is still flagged."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "index.md").write_text('---\nokf_version: "0.2"\n---\n\n# Test\n')
+    address = "10.1" + ".2.3"
+    runtime = tmp_path / ".paperclip-runtime" / "mcp"
+    runtime.mkdir(parents=True)
+    (runtime / "committed.json").write_text(f'{{"url": "http://{address}:9000"}}\n')
+    (runtime / "local.json").write_text(f'{{"url": "http://{address}:9000"}}\n')
+    subprocess.run(["git", "-C", str(tmp_path), "add", "-f", ".paperclip-runtime/mcp/committed.json"],
+                   check=True)
+    _, warnings = scan(Repo(tmp_path))
+    assert [w.split(":")[0] for w in warnings] == [".paperclip-runtime/mcp/committed.json"]

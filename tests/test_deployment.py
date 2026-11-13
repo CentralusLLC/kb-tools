@@ -249,3 +249,69 @@ def test_install_source_prefers_the_git_install_record(monkeypatch):
     assert version.install_source() == version.UPSTREAM_SOURCE  # never copy credentials into a project
     record({"url": "file:///opt/kb-tools", "dir_info": {}})
     assert version.install_source() == version.UPSTREAM_SOURCE
+
+
+# ---------------------------------------------------------------- upgrading projects (gameworld 16, 17, 19)
+
+def _record(monkeypatch, data):
+    class Dist:
+        def read_text(self, name):
+            return json.dumps(data)
+    monkeypatch.setattr(version.metadata, "distribution", lambda name: Dist())
+
+
+def test_install_ref_comes_from_the_git_install_record(monkeypatch):
+    git = {"vcs": "git", "commit_id": "abc"}
+    _record(monkeypatch, {"url": "https://example.invalid/kb-tools", "vcs_info": {**git, "requested_revision": "dev"}})
+    assert version.install_ref() == "dev"
+    _record(monkeypatch, {"url": "https://example.invalid/kb-tools", "vcs_info": git})
+    assert version.install_ref() == "main"
+    _record(monkeypatch, {"url": "https://example.invalid/kb-tools", "vcs_info": {**git, "requested_revision": "x\ny"}})
+    assert version.install_ref() == "main"
+    _record(monkeypatch, {"url": "file:///opt/kb-tools", "dir_info": {}})
+    assert version.install_ref() == "main"
+
+
+def test_scaffold_records_the_ref_kb_tools_was_installed_from(tmp_path, monkeypatch):
+    monkeypatch.setattr("kbtools.scaffold.install_source", lambda: "git+https://example.invalid/kb-tools")
+    monkeypatch.setattr("kbtools.scaffold.install_ref", lambda: "dev")
+    scaffold(tmp_path, project="Shop", actor="t")
+    assert "ref=dev\n" in (tmp_path / "tools" / "kb.conf").read_text()
+
+
+def test_tools_only_replaces_the_wrapper_and_adds_the_conf(tmp_path, monkeypatch):
+    monkeypatch.setattr("kbtools.scaffold.install_source", lambda: "git+https://example.invalid/kb-tools")
+    monkeypatch.setattr("kbtools.scaffold.install_ref", lambda: "dev")
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools" / "kb").write_text("#!/bin/sh\n# an older wrapper\n")
+    (tmp_path / "AGENTS.md").write_text("project's own\n")
+    result = scaffold(tmp_path, project="", actor="t", tools_only=True)
+    assert result == {"created": ["tools/kb.conf"], "updated": ["tools/kb"], "skipped": []}
+    bin_kb = Path(__file__).resolve().parents[1] / "bin" / "kb"
+    assert (tmp_path / "tools" / "kb").read_bytes() == bin_kb.read_bytes()
+    assert os.access(tmp_path / "tools" / "kb", os.X_OK)
+    assert "ref=dev\n" in (tmp_path / "tools" / "kb.conf").read_text()
+    assert (tmp_path / "AGENTS.md").read_text() == "project's own\n" and not (tmp_path / "docs").exists()
+    # A project's own kb.conf is kept, and a current wrapper is left alone.
+    (tmp_path / "tools" / "kb.conf").write_text("source=git+https://example.invalid/fork/kb-tools\nref=v1\n")
+    again = scaffold(tmp_path, project="", actor="t", tools_only=True)
+    assert again == {"created": [], "updated": [], "skipped": ["tools/kb", "tools/kb.conf"]}
+    assert "ref=v1" in (tmp_path / "tools" / "kb.conf").read_text()
+
+
+def test_plain_scaffold_never_replaces_the_wrapper(tmp_path):
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools" / "kb").write_text("old\n")
+    result = scaffold(tmp_path, project="Shop", actor="t")
+    assert "tools/kb" in result["skipped"] and result["updated"] == []
+    assert (tmp_path / "tools" / "kb").read_text() == "old\n"
+
+
+def test_cli_scaffold_needs_a_project_unless_tools_only(tmp_path, capsys):
+    from kbtools.cli import main
+
+    assert main(["--repo", str(tmp_path), "scaffold"]) == 2
+    assert "--tools-only" in capsys.readouterr().err
+    assert main(["--repo", str(tmp_path), "scaffold", "--tools-only"]) == 0
+    out = capsys.readouterr().out
+    assert "created tools/kb" in out and "created tools/kb.conf" in out and not (tmp_path / "docs").exists()

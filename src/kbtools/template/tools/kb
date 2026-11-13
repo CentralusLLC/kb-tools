@@ -19,8 +19,12 @@
 #   password database, which persists in agent dev containers even when $HOME is per-run).
 # KB_TOOLS_SOURCE is the pip source to install from. Without it, --install reads `source=`
 #   from tools/kb.conf in the repository (written by `kb scaffold`), then from the last
-#   install's $KB_TOOLS_HOME/install.conf. KB_TOOLS_REF (or `ref=` in tools/kb.conf) is the
-#   default ref (main).
+#   install's $KB_TOOLS_HOME/install.conf, then from pip's record of an existing install
+#   (installs made before tools/kb.conf existed). KB_TOOLS_REF (or `ref=` in tools/kb.conf)
+#   is the default ref (main).
+#
+# To upgrade this file and add tools/kb.conf in a project set up by an older kb-tools:
+#   tools/kb --install <ref> && tools/kb scaffold --tools-only
 set -eu
 IMAGE="${KB_TOOLS_IMAGE:-kb-tools:latest}"
 if [ -z "${KB_TOOLS_HOME:-}" ]; then
@@ -34,6 +38,28 @@ setting() { # setting KEY FILE: the value of KEY=... in FILE, if any
   [ -f "$2" ] && sed -n "s/^$1=//p" "$2" | head -n 1 | tr -d '[:space:]' || true
 }
 
+installed() { # installed WHAT: `source` (git+URL, no credentials) or `package` dir of the local install
+  [ -x "$KB_TOOLS_HOME/bin/python" ] || return 0
+  "$KB_TOOLS_HOME/bin/python" - "$1" 2>/dev/null <<'PY' || true
+import json, sys
+from importlib import metadata
+try:
+    dist = metadata.distribution("kb-tools")
+except metadata.PackageNotFoundError:
+    sys.exit(0)
+if sys.argv[1] == "package":
+    print(dist.locate_file("kbtools"))
+    sys.exit(0)
+try:
+    data = json.loads(dist.read_text("direct_url.json") or "{}")
+except ValueError:
+    sys.exit(0)
+url = data.get("url", "")
+if (data.get("vcs_info") or {}).get("vcs") == "git" and url and "@" not in url.split("://", 1)[-1]:
+    print("git+" + url)
+PY
+}
+
 if [ "${1:-}" = "--install" ]; then
   shift
   EXTRAS="${KB_TOOLS_EXTRAS:-}"
@@ -45,6 +71,7 @@ if [ "${1:-}" = "--install" ]; then
   REF="${REF:-main}"
   SOURCE="${KB_TOOLS_SOURCE:-$(setting source "$ROOT/tools/kb.conf")}"
   SOURCE="${SOURCE:-$(setting source "$KB_TOOLS_HOME/install.conf")}"
+  SOURCE="${SOURCE:-$(installed source)}"
   case "$SOURCE" in
     ""|*"<"*)
       echo "kb: no kb-tools source. Set source= in tools/kb.conf (kb scaffold writes it) or run" >&2
@@ -59,6 +86,12 @@ if [ "${1:-}" = "--install" ]; then
   python3 -m venv --clear "$KB_TOOLS_HOME"
   "$KB_TOOLS_HOME/bin/pip" install --quiet --disable-pip-version-check "$SPEC"
   printf 'source=%s\nref=%s\nextras=%s\n' "$SOURCE" "$REF" "$EXTRAS" > "$KB_TOOLS_HOME/install.conf"
+  PACKAGE="$(installed package)"
+  if [ -n "$PACKAGE" ] && [ -f "$PACKAGE/template/tools/kb" ] && [ -f "$ROOT/tools/kb" ] &&
+     ! cmp -s "$PACKAGE/template/tools/kb" "$ROOT/tools/kb"; then
+    echo "kb: this project's tools/kb differs from the installed version's. To update it (and add" >&2
+    echo "    tools/kb.conf if missing), run: tools/kb scaffold --tools-only" >&2
+  fi
   exec "$KB_TOOLS_HOME/bin/kb" --version
 fi
 

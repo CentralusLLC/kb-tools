@@ -24,6 +24,9 @@ ALLOW_MARKER = "kb-scan: allow"
 DENYLIST_ENV = "KB_SCAN_DENYLIST"
 MAX_BYTES = 1024 * 1024
 SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache"}
+# Untracked runtime folders that hold deployment values by design and are never committed:
+# Paperclip writes its per-run MCP config into .paperclip-runtime/ in every agent workspace.
+RUNTIME_DIRS = {".paperclip-runtime"}
 
 
 @dataclass(frozen=True)
@@ -81,18 +84,24 @@ def load_denylist(path: Path) -> tuple[list[Rule], list[str]]:
 
 
 def tracked_files(repo: Repo) -> list[Path]:
-    """Files git tracks (plus untracked, not ignored ones); a directory walk outside git."""
+    """Files git tracks plus untracked, not ignored ones (so a value is caught before it is
+    committed); untracked files in runtime folders such as .paperclip-runtime/ are skipped, but
+    a tracked file there is still scanned. A directory walk outside git."""
+    def ls_files(*args: str) -> set[str]:
+        result = subprocess.run(["git", "-C", str(repo.root), "ls-files", "-z", *args],
+                                capture_output=True, check=True)
+        return {n for n in result.stdout.decode("utf-8", "replace").split("\0") if n}
+
     try:
-        result = subprocess.run(
-            ["git", "-C", str(repo.root), "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
-            capture_output=True, check=True)
-        names = sorted({n for n in result.stdout.decode("utf-8", "replace").split("\0") if n})
-        return [repo.root / n for n in names if (repo.root / n).is_file()]
+        tracked = ls_files("--cached")
+        untracked = {n for n in ls_files("--others", "--exclude-standard")
+                     if n.split("/", 1)[0] not in RUNTIME_DIRS}
+        return [repo.root / n for n in sorted(tracked | untracked) if (repo.root / n).is_file()]
     except (OSError, subprocess.CalledProcessError):
         pass
     found = []
     for directory, subdirs, files in os.walk(repo.root):
-        subdirs[:] = sorted(d for d in subdirs if d not in SKIP_DIRS)
+        subdirs[:] = sorted(d for d in subdirs if d not in SKIP_DIRS | RUNTIME_DIRS)
         here = Path(directory)
         if here == repo.sources or repo.sources in here.parents:
             continue

@@ -56,7 +56,9 @@ passes `kb check` cleanly, and that the template's `tools/kb` matches `bin/kb`.
 
 ## Use from a project
 
-Copy [`bin/kb`](bin/kb) into the project as `tools/kb`. With Docker and the
+`kb scaffold` puts [`bin/kb`](bin/kb) into the project as `tools/kb`; `kb scaffold
+--tools-only` replaces it with the installed version's (and adds a missing `tools/kb.conf`)
+when upgrading a project. With Docker and the
 `kb-tools:latest` image it mounts the repository root into the container, runs as your
 user, and has no network access.
 
@@ -72,7 +74,7 @@ tools/kb --version          # kb-tools 0.1.0+<ref>.<commit>
 ```
 
 The source comes from `KB_TOOLS_SOURCE`, else `source=` in the project's `tools/kb.conf`
-(written by `kb scaffold`), else the last install. In Paperclip, extraction and figures run
+(written by `kb scaffold`), else the last install or pip's record of an existing install. In Paperclip, extraction and figures run
 on the Paperclip machine through the MCP server, so project containers only need the light
 install. `KB_TOOLS_HOME`, `KB_TOOLS_REF` and `KB_TOOLS_EXTRAS` override the location, default
 ref and extras ([configuration](docs/environments/configuration.md)).

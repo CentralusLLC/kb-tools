@@ -161,3 +161,42 @@ def test_default_home_is_the_password_database_home_not_HOME(env):
     result = run(env, "check")
     assert result.returncode == 1
     assert f"{pwd.getpwuid(os.getuid()).pw_dir}/.kb-tools" in result.stderr
+
+
+def fake_existing_install(env: dict, source: str = "", package: Path | None = None) -> None:
+    """An install made by an older wrapper: no install.conf, only pip's record (via bin/python)."""
+    stub(
+        Path(env["env"]["KB_TOOLS_HOME"]) / "bin" / "python",
+        f'cat > /dev/null\ncase "$2" in source) echo "{source}" ;; package) echo "{package or ""}" ;; esac\n',
+    )
+
+
+def test_install_finds_the_source_of_an_install_made_before_kb_conf(env):
+    """gameworld feedback 16: an old install and no tools/kb.conf must not leave --install stuck."""
+    fake_existing_install(env, source="git+https://example.invalid/old/kb-tools")
+    fake_python(env)
+    result = run(env, "--install", "dev")
+    assert result.returncode == 0, result.stderr
+    assert env["log"].read_text().splitlines()[1].endswith(" git+https://example.invalid/old/kb-tools@dev")
+
+
+def test_install_says_when_the_projects_wrapper_is_older(env):
+    """gameworld feedback 19: point at `scaffold --tools-only` when tools/kb differs."""
+    package = env["tmp"] / "site" / "kbtools"
+    (package / "template" / "tools").mkdir(parents=True)
+    (package / "template" / "tools" / "kb").write_text(WRAPPER.read_text())
+    (env["project"] / "tools").mkdir()
+    (env["project"] / "tools" / "kb").write_text("#!/bin/sh\n# older\n")
+    fake_python(env)
+    env["env"]["KB_TOOLS_SOURCE"] = "git+https://example.invalid/kb-tools"
+
+    def install():  # the fake venv --clear keeps bin/python, so re-stub it after each install
+        fake_existing_install(env, package=package)
+        return run(env, "--install", "dev")
+
+    assert install().returncode == 0  # first install: bin/python appears
+    result = install()
+    assert result.returncode == 0, result.stderr
+    assert "tools/kb scaffold --tools-only" in result.stderr
+    (env["project"] / "tools" / "kb").write_text(WRAPPER.read_text())
+    assert "--tools-only" not in install().stderr
