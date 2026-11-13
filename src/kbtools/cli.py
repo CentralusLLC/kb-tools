@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from .version import full_version
 from .common import Repo, find_repo
 
 
@@ -67,7 +68,29 @@ def cmd_inventory(args) -> int:
     return 0
 
 
+EXTRACT_MISSING = """kb {command}: the extraction libraries are not installed (light install).
+Document extraction and figures run on the Paperclip machine: ask the agent that ingests
+documents there (for example a Librarian agent) to run kb_{command} through the kb-tools MCP server.
+To run it here instead, install everything: tools/kb --install --full ({missing} is missing)."""
+
+
+def _needs_extract(command: str) -> int:
+    """0 when the [extract] dependencies import, otherwise print why and return 2."""
+    import importlib
+
+    modules = ("PIL",) if command == "figure" else ("markitdown", "pptx", "openpyxl", "pypdfium2", "PIL")
+    for module in modules:
+        try:
+            importlib.import_module(module)
+        except ImportError:
+            print(EXTRACT_MISSING.format(command=command, missing=module), file=sys.stderr)
+            return 2
+    return 0
+
+
 def cmd_extract(args) -> int:
+    if code := _needs_extract("extract"):
+        return code
     from .extract import extract_source, pending_sources
 
     repo = _repo(args)
@@ -114,6 +137,8 @@ def cmd_log(args) -> int:
 
 
 def cmd_figure(args) -> int:
+    if code := _needs_extract("figure"):
+        return code
     from .figure import make_figure
 
     snippet = make_figure(
@@ -180,13 +205,28 @@ def cmd_report(args) -> int:
 def cmd_serve(args) -> int:
     from .server import serve
 
-    serve(host=args.host, port=args.port, allowed_roots=[Path(p) for p in args.allowed_root])
+    from .server import settings
+
+    config = settings()
+    serve(host=args.host or config.host, port=args.port or config.port, repos_root=config.repos_root,
+          allowed_roots=[Path(p) for p in args.allowed_root] or config.allowed_roots)
     return 0
+
+
+class _Version(argparse.Action):
+    """--version, resolved only when asked for (it may call git)."""
+
+    def __init__(self, option_strings, dest=argparse.SUPPRESS, default=argparse.SUPPRESS, help=None):
+        super().__init__(option_strings, dest=dest, default=default, nargs=0, help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(f"kb-tools {full_version()}")
+        parser.exit()
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="kb", description="Knowledge-base ingestion and trust tools.")
-    parser.add_argument("--version", action="version", version=f"kb-tools {__version__}")
+    parser.add_argument("--version", action=_Version, help="show the version, git ref and commit, and exit")
     parser.add_argument("--repo", help="repository root (default: found from the current directory)")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -281,9 +321,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_report)
 
     p = sub.add_parser("serve", help="run the MCP server (streamable HTTP) for agents")
-    p.add_argument("--host", default="0.0.0.0")
-    p.add_argument("--port", type=int, default=8765)
-    p.add_argument("--allowed-root", action="append", default=[], help="directories repos must live under (repeatable)")
+    p.add_argument("--host", help="address to listen on (default: $KB_MCP_HOST or 127.0.0.1)")
+    p.add_argument("--port", type=int, help="port to listen on (default: $KB_MCP_PORT or 8765)")
+    p.add_argument("--allowed-root", action="append", default=[],
+                   help="extra directories absolute repo paths may live under (repeatable; default: "
+                        "$KB_ALLOWED_ROOTS). Repos under $KB_REPOS_ROOT (default /repos) are always allowed")
     p.set_defaults(func=cmd_serve)
     return parser
 

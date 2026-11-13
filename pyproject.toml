@@ -6,16 +6,20 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
 authors = [{ name = "CentralusLLC" }]
+# The light commands (check, work, catalog, report, log, inventory, scaffold) need only
+# PyYAML, so project containers install just that. Extraction and figures need [extract].
 dependencies = [
+    "PyYAML>=6",
+]
+
+[project.optional-dependencies]
+extract = [
     "markitdown[pdf,docx,pptx,xlsx,xls]>=0.1.5",
     "python-pptx>=1.0",
     "openpyxl>=3.1",
     "pypdfium2>=4.30",
     "Pillow>=10",
-    "PyYAML>=6",
 ]
-
-[project.optional-dependencies]
 server = ["mcp>=1.12,<2"]
 facts = ["langextract>=1.0"]
 dev = ["pytest>=8", "python-docx>=1.1"]

@@ -7,13 +7,13 @@ description: "Keep the devenv manager and the the Paperclip host deployment, but
 tags: [work-item]
 status: draft
 kind: story
-work_status: todo
+work_status: in_review
 priority: critical
-depends_on: ["0010-11"]
+depends_on: []
 links: 
   github: ""
   jira: ""
-  paperclip: ""
+  paperclip: "CEN-34"
 generated: 
   by: claude-code/opus-5.5
   at: 2026-11-06T13:01:03Z
@@ -48,18 +48,39 @@ Proposal:
   `<host-ip>` and `<kb-mcp-url>`, with one table listing every variable, its default and what
   it controls (in `docs/environments/configuration.md`).
 
+Added scope (2026-11-12, CEN-34): the gameworld add-on validation (CEN-35, feedback 1-4) and
+the board's deployment model (CEN-12: heavy extraction only on the Paperclip machine through
+the MCP server, light `tools/kb` in project containers):
+
+- MCP server: `KB_REPOS_ROOT` (default `/repos`) where `repo=<name>` or `<owner>/<name>`
+  resolves; `KB_ALLOWED_ROOTS` for absolute paths; errors and the server instructions list
+  what the server can see; failures are MCP tool errors (`isError: true`).
+- `tools/kb --install` is light by default (PyYAML only); `--full` / `KB_TOOLS_EXTRAS=extract`
+  adds the `[extract]` extra. `kb extract` / `kb figure` without it say where to run them.
+- The kb-tools source is recorded once per project in `tools/kb.conf` (written by
+  `kb scaffold`) and per install in `$KB_TOOLS_HOME/install.conf`.
+- `kb --version` reports `0.1.0+<ref>.<commit>`.
+- `kb check` stays clean when an ingested original is not present locally (regression test).
+- An add-on install guide (`docs/environments/paperclip-add-on.md`) that says plainly which
+  tools are for which agents.
+
 ## Acceptance criteria
 
-- [ ] No Centralus value remains in code, compose files or docs touched here; the 0010-11
-      scan is clean for them.
-- [ ] Defaults are neutral (`127.0.0.1`, no internal IPs or hosts).
-- [ ] `devenv/compose.yaml` uses `${VAR}` interpolation only; `devenv/.env.example` is
+- [x] No Centralus value remains in code, compose files or docs touched here; the 0010-11
+      scan is clean for them. (One deliberate exception for 0010-11 to confirm: the public
+      repository URL as the fallback install source in `src/kbtools/version.py`.)
+- [x] Defaults are neutral (`127.0.0.1`, no internal IPs or hosts).
+- [x] `devenv/compose.yaml` uses `${VAR}` interpolation only; `devenv/.env.example` is
       committed and `devenv/.env` is git-ignored.
-- [ ] `DEVENV_MANAGER_PORT`, `KB_MCP_HOST` and `KB_MCP_PORT` exist alongside the existing
+- [x] `DEVENV_MANAGER_PORT`, `KB_MCP_HOST` and `KB_MCP_PORT` exist alongside the existing
       `DEVENV_*` variables.
-- [ ] Docs use placeholders and include one table of every variable.
-- [ ] Tests cover the defaults and environment overrides for both the devenv manager and
+- [x] Docs use placeholders and include one table of every variable.
+- [x] Tests cover the defaults and environment overrides for both the devenv manager and
       `kb serve`.
+- [x] `repo=<name>` resolves under `KB_REPOS_ROOT`; MCP failures are tool errors.
+- [x] Light install by default, `--full` for extraction; light commands tested without the
+      extraction libraries.
+- [x] `kb --version` includes the ref and commit; the install source is stored, not repeated.
 - [ ] Before merge, the exact list of variables the Paperclip host's `.env` needs (names and what each
       holds, no values) is posted on the Paperclip task so the admin agent can write it on
       the Paperclip host; anything needed on the Paperclip host or in Paperclip is requested through Chief.
@@ -68,7 +89,9 @@ Proposal:
 
 ## Notes
 
-- Sequencing: after the 0010-11 audit (which lists what to make configurable) and before the
+- Sequencing changed (CEN-34, 2026-11-12): done before 0010-11, because the gameworld
+  validation needed the MCP and install fixes first; 0010-11 then audits the result.
+  Original note: after the 0010-11 audit (which lists what to make configurable) and before the
   0010-10 history rewrite, so the rewrite can replace the old values in history once.
 - Decided 2026-11-06 (owner via Chief, CEN-12/CEN-14): no private repository for now.
   Centralus' real non-secret values (the Paperclip host IP, ports, host names, MCP address) live only in

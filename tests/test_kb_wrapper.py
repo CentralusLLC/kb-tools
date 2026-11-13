@@ -73,12 +73,6 @@ def test_explains_both_options_when_nothing_is_installed(env):
     assert env["env"]["KB_TOOLS_HOME"] in result.stderr
 
 
-def test_install_needs_a_source(env):
-    result = run(env, "--install")
-    assert result.returncode == 2
-    assert "KB_TOOLS_SOURCE" in result.stderr
-
-
 def fake_python(env: dict) -> None:
     # python3 -m venv --clear DIR -> DIR/bin/pip (records its args) and DIR/bin/kb.
     stub(
@@ -92,7 +86,7 @@ def fake_python(env: dict) -> None:
 
 
 @pytest.mark.parametrize(("args", "ref_env", "ref"), [((), None, "main"), (("v0.2.0",), None, "v0.2.0"), ((), "dev", "dev")])
-def test_install_creates_a_venv_at_the_ref(env, args, ref_env, ref):
+def test_install_creates_a_light_venv_at_the_ref(env, args, ref_env, ref):
     fake_python(env)
     env["env"]["KB_TOOLS_SOURCE"] = "git+https://example.invalid/kb-tools"
     if ref_env:
@@ -102,9 +96,60 @@ def test_install_creates_a_venv_at_the_ref(env, args, ref_env, ref):
     home = env["env"]["KB_TOOLS_HOME"]
     calls = env["log"].read_text().splitlines()
     assert calls[0] == f"python3 -m venv --clear {home}"
-    assert calls[1].startswith("pip install") and calls[1].endswith(f"git+https://example.invalid/kb-tools@{ref}")
-    assert "--no-deps" not in calls[1]  # full install with every dependency (board, CEN-23)
+    # Light by default (board, CEN-12, 2026-11-12): no [extract] libraries in project containers.
+    assert calls[1].startswith("pip install") and calls[1].endswith(f" git+https://example.invalid/kb-tools@{ref}")
+    assert "[extract]" not in calls[1] and "--no-deps" not in calls[1]
     assert calls[2] == "kb --version"
+
+
+@pytest.mark.parametrize("how", ["flag", "env"])
+def test_full_install_adds_the_extract_extra(env, how):
+    fake_python(env)
+    env["env"]["KB_TOOLS_SOURCE"] = "git+https://example.invalid/kb-tools"
+    if how == "env":
+        env["env"]["KB_TOOLS_EXTRAS"] = "extract"
+        result = run(env, "--install", "dev")
+    else:
+        result = run(env, "--install", "--full", "dev")
+    assert result.returncode == 0, result.stderr
+    pip = env["log"].read_text().splitlines()[1]
+    assert pip.endswith("kb-tools[extract] @ git+https://example.invalid/kb-tools@dev")
+
+
+def test_install_reads_the_source_and_ref_from_the_project_conf(env):
+    fake_python(env)
+    tools = env["project"] / "tools"
+    tools.mkdir()
+    (tools / "kb.conf").write_text("# comment\nsource=git+https://example.invalid/upstream/kb-tools\nref=v0.2.0\n")
+    result = run(env, "--install")
+    assert result.returncode == 0, result.stderr
+    assert env["log"].read_text().splitlines()[1].endswith(" git+https://example.invalid/upstream/kb-tools@v0.2.0")
+    conf = (Path(env["env"]["KB_TOOLS_HOME"]) / "install.conf").read_text()
+    assert "source=git+https://example.invalid/upstream/kb-tools\n" in conf and "ref=v0.2.0\n" in conf
+    env["env"]["KB_TOOLS_SOURCE"] = "git+https://example.invalid/fork/kb-tools"  # the environment wins
+    assert run(env, "--install", "dev").returncode == 0
+    assert env["log"].read_text().splitlines()[-2].endswith(" git+https://example.invalid/fork/kb-tools@dev")
+
+
+@pytest.mark.parametrize("conf", [None, "source=git+https://github.com/<owner>/kb-tools\n"])
+def test_install_without_a_source_explains_where_to_set_it(env, conf):
+    if conf:
+        (env["project"] / "tools").mkdir()
+        (env["project"] / "tools" / "kb.conf").write_text(conf)
+    result = run(env, "--install")
+    assert result.returncode == 2
+    assert "tools/kb.conf" in result.stderr and "KB_TOOLS_SOURCE" in result.stderr
+
+
+def test_install_reuses_the_recorded_source(env):
+    fake_python(env)
+    env["env"]["KB_TOOLS_SOURCE"] = "git+https://example.invalid/fork/kb-tools"
+    assert run(env, "--install", "dev").returncode == 0
+    del env["env"]["KB_TOOLS_SOURCE"]
+    env["log"].unlink()
+    result = run(env, "--install", "dev")
+    assert result.returncode == 0, result.stderr
+    assert env["log"].read_text().splitlines()[1].endswith(" git+https://example.invalid/fork/kb-tools@dev")
 
 
 def test_default_home_is_the_password_database_home_not_HOME(env):

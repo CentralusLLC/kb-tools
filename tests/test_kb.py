@@ -342,6 +342,7 @@ def test_mcp_kb_catalog_write_regenerates_catalog(tmp_path, monkeypatch):
     path.write_text(path.read_text().replace("0001 Reporting", "hand-edited row"))
     assert catalog.is_stale(repo)
 
+    server.configure(tmp_path.parent, [])  # the repository is visible under the repos root
     mcp = server.build_server()
 
     def call(**arguments) -> str:

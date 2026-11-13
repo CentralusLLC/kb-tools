@@ -1,42 +1,157 @@
 """MCP server exposing kb commands as tools (streamable HTTP).
 
-Each tool runs the `kb` CLI as a subprocess against a repository path that must
-live under one of the allowed roots (for Paperclip: the shared /paperclip volume),
-so agents in other containers can ingest without LibreOffice or Python packages.
+Each tool runs the `kb` CLI as a subprocess against a repository the server itself can
+see. The server is meant for agents on the Paperclip machine (the Librarian, Chief) that
+need the heavy commands (extract, figure); project containers use `tools/kb` instead.
+
+`repo` is either a repository name looked up under KB_REPOS_ROOT (`gameworld` or
+`owner/gameworld`) or an absolute path under KB_REPOS_ROOT or one of the allowed roots.
+Failures are raised, so MCP clients see them as tool errors (`isError: true`).
 """
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 
-INSTRUCTIONS = """\
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 8765
+DEFAULT_REPOS_ROOT = "/repos"
+TIMEOUT = 1800
+
+
+@dataclass
+class Settings:
+    """Server settings from the environment (`kb serve` flags override them)."""
+
+    host: str = DEFAULT_HOST
+    port: int = DEFAULT_PORT
+    repos_root: Path = Path(DEFAULT_REPOS_ROOT)
+    allowed_roots: list[Path] = field(default_factory=list)
+
+
+def settings(environ: dict[str, str] | None = None) -> Settings:
+    env = os.environ if environ is None else environ
+    port = env.get("KB_MCP_PORT", "").strip()
+    try:
+        port_number = int(port) if port else DEFAULT_PORT
+    except ValueError:
+        raise SystemExit(f"kb serve: KB_MCP_PORT must be a port number, not {port!r}")
+    return Settings(
+        host=env.get("KB_MCP_HOST", "").strip() or DEFAULT_HOST,
+        port=port_number,
+        repos_root=Path(env.get("KB_REPOS_ROOT", "").strip() or DEFAULT_REPOS_ROOT),
+        allowed_roots=[Path(p) for p in env.get("KB_ALLOWED_ROOTS", "").split(os.pathsep) if p.strip()],
+    )
+
+
+class KbToolError(Exception):
+    """A tool failure; FastMCP returns it to the client as a tool error (isError: true)."""
+
+
+_REPOS_ROOT: list[Path] = [Path(DEFAULT_REPOS_ROOT)]
+_ALLOWED: list[Path] = []
+
+
+def configure(repos_root: Path, allowed_roots: list[Path]) -> None:
+    _REPOS_ROOT[:] = [Path(repos_root).resolve()]
+    _ALLOWED[:] = [Path(root).resolve() for root in allowed_roots]
+
+
+def _roots() -> list[Path]:
+    return [*_REPOS_ROOT, *(r for r in _ALLOWED if r not in _REPOS_ROOT)]
+
+
+def visible_repos(limit: int = 50) -> list[str]:
+    """Repository names under KB_REPOS_ROOT (`name` or `owner/name`), as agents can pass them."""
+    root = _REPOS_ROOT[0]
+    if not root.is_dir():
+        return []
+
+    def is_repo(path: Path) -> bool:
+        return (path / ".git").exists() or (path / "docs").is_dir()
+
+    names = []
+    for child in sorted(root.iterdir()):
+        if not child.is_dir() or child.name.startswith("."):
+            continue
+        if is_repo(child):
+            names.append(child.name)
+        else:
+            names += [f"{child.name}/{g.name}" for g in sorted(child.iterdir()) if g.is_dir() and is_repo(g)]
+    return names[:limit]
+
+
+def _where() -> str:
+    repos = visible_repos()
+    listed = ", ".join(repos) if repos else "none"
+    return (f"KB_REPOS_ROOT is {_REPOS_ROOT[0]} (repositories there: {listed}); "
+            f"absolute paths must be under {', '.join(str(r) for r in _roots())}")
+
+
+def resolve_repo(repo: str) -> Path:
+    """Map `repo` (a name under KB_REPOS_ROOT, or an absolute path) to a directory, or raise."""
+    value = (repo or "").strip()
+    if not value:
+        raise KbToolError(f"repo is required. {_where()}")
+    if Path(value).is_absolute():
+        path = Path(value).resolve()
+        if not path.is_dir():
+            raise KbToolError(f"{value} is not a directory visible to the kb-tools server. {_where()}")
+        if not any(path.is_relative_to(root) for root in _roots()):
+            raise KbToolError(f"{value} is outside the kb-tools server's roots. {_where()}")
+        return path
+    name = value.removesuffix(".git").strip("/")
+    parts = name.split("/")
+    if any(part in {"", ".", ".."} for part in parts):
+        raise KbToolError(f"{value!r} is not a repository name. {_where()}")
+    root = _REPOS_ROOT[0]
+    candidates = [root / name]
+    if len(parts) > 1:
+        candidates.append(root / parts[-1])
+    elif root.is_dir():
+        candidates += sorted(owner / name for owner in root.iterdir() if owner.is_dir() and not owner.name.startswith("."))
+    found = list(dict.fromkeys(c.resolve() for c in candidates if c.is_dir()))
+    found = [f for f in found if f.is_relative_to(root)]
+    if len(found) > 1:
+        raise KbToolError(f"{value!r} matches more than one repository: {', '.join(map(str, found))}; "
+                          f"pass owner/name or the absolute path")
+    if not found:
+        raise KbToolError(f"no repository {value!r} under KB_REPOS_ROOT. {_where()}. On the Paperclip "
+                          f"machine, check the repository out under KB_REPOS_ROOT; in a project container, "
+                          f"use tools/kb instead of the MCP tools")
+    return found[0]
+
+
+def instructions() -> str:
+    return f"""\
 kb-tools: document ingestion and knowledge-base checks for repositories that keep an
-OKF knowledge base in docs/. Pass `repo` as the absolute path of the repository checkout
-(the same path you see in your workspace). Typical flow: kb_inventory -> kb_extract ->
+OKF knowledge base in docs/. These MCP tools are for agents on the Paperclip machine (the
+agent that ingests documents, e.g. a Librarian, and Chief): they run against checkouts the
+server can see. Agents working in a project's dev container use `tools/kb` there instead.
+Pass `repo` as a repository name under the server's repos root ({_REPOS_ROOT[0]}), e.g.
+`gameworld` or `owner/gameworld`, or as an absolute path under {', '.join(str(r) for r in _roots())}.
+A failed call is returned as a tool error. Typical flow: kb_inventory -> kb_extract ->
 read extracted/<package>/ (pages.md, slides.md, renders/*.png) and reconcile ->
 kb_figure for key graphics -> write pages -> kb_log -> kb_check. Read the repository's
 docs/process/ingestion.md for the full method.
 """
 
-_ALLOWED: list[Path] = []
-TIMEOUT = 1800
-
 
 def _run(repo: str, *args: str) -> str:
-    path = Path(repo).resolve()
-    if not path.is_dir():
-        return f"error: {repo} is not a directory visible to the kb-tools server"
-    if _ALLOWED and not any(path.is_relative_to(root) for root in _ALLOWED):
-        return f"error: {repo} is outside the allowed roots {[str(r) for r in _ALLOWED]}"
+    path = resolve_repo(repo)
     try:
         run = subprocess.run([sys.executable, "-m", "kbtools.cli", "--repo", str(path), *args],
                              capture_output=True, text=True, timeout=TIMEOUT, cwd=path)
     except subprocess.TimeoutExpired:
-        return f"error: kb {' '.join(args)} timed out after {TIMEOUT}s"
+        raise KbToolError(f"kb {' '.join(args[:2])} timed out after {TIMEOUT}s")
     output = (run.stdout + ("\n" + run.stderr if run.stderr.strip() else "")).strip()
-    return f"exit {run.returncode}\n{output}"
+    if run.returncode != 0:
+        raise KbToolError(f"kb {' '.join(args[:2])} failed (exit {run.returncode}) in {path}\n{output}")
+    return f"exit 0 ({path})\n{output}"
 
 
 def _run_dir(repo: str, *args: str) -> str:
@@ -44,11 +159,11 @@ def _run_dir(repo: str, *args: str) -> str:
     return _run(repo, *args)
 
 
-def build_server(host: str = "0.0.0.0", port: int = 8765):
+def build_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT):
     from mcp.server.fastmcp import FastMCP
     from mcp.types import ToolAnnotations
 
-    mcp = FastMCP("kb-tools", instructions=INSTRUCTIONS, host=host, port=port)
+    mcp = FastMCP("kb-tools", instructions=instructions(), host=host, port=port)
     # Risk hints for clients that classify tools (Paperclip quarantines destructive tools
     # and gates writes): reads are read-only; writes only add or update files inside the
     # repository's docs/sources log, extracted/ and docs/ assets, never delete user content.
@@ -172,6 +287,6 @@ def build_server(host: str = "0.0.0.0", port: int = 8765):
     return mcp
 
 
-def serve(host: str, port: int, allowed_roots: list[Path]) -> None:
-    _ALLOWED[:] = [root.resolve() for root in allowed_roots]
+def serve(host: str, port: int, repos_root: Path, allowed_roots: list[Path]) -> None:
+    configure(repos_root, allowed_roots)
     build_server(host, port).run(transport="streamable-http")

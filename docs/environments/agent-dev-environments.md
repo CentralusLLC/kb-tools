@@ -14,14 +14,16 @@ generated:
 Paperclip agents develop and test inside **per-project dev containers** on the Paperclip host, through
 Paperclip's SSH execution environment. The containers are built from each repository's
 `.devcontainer/` by the **devenv manager** (`devenv/` in this repository) and run under an
-isolated account. The manager holds no GitHub credential: Paperclip syncs the worktree into
+isolated account (called `agentdev` here). The manager holds no GitHub credential: Paperclip syncs the worktree into
 the container on every run and writes new commits back, and pushes go through Paperclip's
-managed GitHub launchers. Epic 0010 tracks the work ([roadmap](../work/index.md)).
+managed GitHub launchers. Epic 0010 tracks the work ([roadmap](../work/index.md)). Every
+host, address and port is a setting ([Configuration](configuration.md#devenv-manager-devenv));
+the values below are placeholders.
 
 ```mermaid
 flowchart LR
-  pc[Paperclip server, centralus] -->|SSH <host-ip>:226xx| dc[devenv-PROJECT container, agentdev]
-  pc -->|MCP + bearer token, <host-ip>:<manager-port>| mgr[devenv manager, agentdev]
+  pc[Paperclip server] -->|SSH host-ip:project port| dc[devenv-PROJECT container, agentdev]
+  pc -->|MCP + bearer token, host-ip:manager port| mgr[devenv manager, agentdev]
   mgr -->|rootless Docker socket| docker[agentdev Docker daemon]
   docker --> dc
   mgr -->|copies synced worktree to build .devcontainer| dc
@@ -33,8 +35,8 @@ flowchart LR
 | --- | --- |
 | Paperclip server | Runs the agent harness locally, or remotely through an SSH environment |
 | devenv-PROJECT container | Project dev image plus agent overlay: sshd (user `agent`, key-only, no sudo), node, claude CLI, git |
-| devenv manager | MCP server (`kb-devenv` image) in `~agentdev/stacks/devenv` |
-| agentdev Docker daemon | Rootless Docker of the `agentdev` account (its own uid) |
+| devenv manager | MCP server (`kb-devenv` image), a compose stack in the `agentdev` account |
+| agentdev Docker daemon | Rootless Docker of the `agentdev` account |
 
 **Edges**
 
@@ -47,17 +49,18 @@ flowchart LR
 
 ## Isolation
 
-- `agentdev` (its own uid): locked password, no sudo, no groups, linger, its own rootless Docker.
-  Agents' builds and installs cannot reach Paperclip, its database or its secrets.
-- Egress (`/etc/nftables-org-isolation.nft`): internet, DNS, the LLM gateway, and Paperclip's
-  HTTPS front only (`<host>.<tailnet>.ts.net:22000`, i.e. <tailnet-ip>:22000). LAN, the rest of
-  the tailnet, Hindsight and other accounts' ports are rejected (verified 2026-11-05).
-- Why Paperclip's port is open: `claude_local` remote runs reach the Paperclip API through the
+- `agentdev`: a dedicated account with a locked password, no sudo, no groups, lingering, and its
+  own rootless Docker. Agents' builds and installs cannot reach Paperclip, its database or its
+  secrets.
+- Egress: restrict the account's traffic (for example with nftables) to the internet, DNS, the
+  model gateway and Paperclip's public HTTPS URL; reject the LAN, other accounts' ports and
+  internal services.
+- Why Paperclip's URL is open: `claude_local` remote runs reach the Paperclip API through the
   SSH callback bridge, but its managed `git`/`gh` launchers fetch GitHub credentials from the
   instance's public URL (`heartbeat.ts`), so SSH runs need that one path to fetch and push.
-- Paperclip (centralus) reaches dev containers and the manager on `<host-ip>` (internal
-  dummy interface, not exposed to the LAN) in its allowed range: manager `<manager-port>`, dev
-  containers `<port-range>`.
+- Paperclip reaches dev containers and the manager on `DEVENV_HOST_IP` (`<host-ip>`), which
+  should be a private address not exposed to the LAN: the manager on `DEVENV_MANAGER_PORT`
+  (`<manager-port>`), dev containers in `DEVENV_PORTS` (`<ssh-port-range>`).
 - The manager requires a bearer token known only to the Paperclip connection, so agents cannot
   call it directly and bypass Paperclip's approvals.
 
@@ -83,19 +86,29 @@ System packages: preferably a pull request to `.devcontainer/` followed by `deve
 the review is the approval; `devenv_install` (approval card) for urgent needs, persisted for
 rebuilds.
 
+## Deploying the manager
+
+1. Create the `agentdev` account with rootless Docker, and copy `devenv/` to a stack folder in
+   it (for example `~agentdev/stacks/devenv`).
+2. Copy `devenv/.env.example` to `.env` there and fill in `DEVENV_TOKEN`, `DEVENV_HOST_IP`,
+   `DEVENV_MANAGER_PORT` and `DEVENV_PORTS` ([Configuration](configuration.md#devenv-manager-devenv)).
+   `.env` is git-ignored; keep the token in Paperclip secrets too.
+3. `docker compose up -d --build` as `agentdev`.
+
 ## Operations
 
 ```sh
-# as reviewer on the Paperclip host
-A="sudo -u agentdev env XDG_RUNTIME_DIR=/run/user/1006 DOCKER_HOST=unix:///run/user/1006/docker.sock"
-$A docker compose --project-directory /home/agentdev/stacks/devenv ps        # manager
+# as an admin on the Paperclip host
+A="sudo -u agentdev env XDG_RUNTIME_DIR=/run/user/<agentdev-uid> DOCKER_HOST=unix:///run/user/<agentdev-uid>/docker.sock"
+$A docker compose --project-directory <stack-folder> ps                      # manager
 $A docker ps --filter label=devenv.project                                   # dev containers
-sudo cat /home/agentdev/stacks/devenv/data/logs/<project>.log                # build log
-sudo cat /home/agentdev/stacks/devenv/data/state.json                        # ports, status, installs
+sudo cat <stack-folder>/data/logs/<project>.log                              # build log
+sudo cat <stack-folder>/data/state.json                                      # ports, status, installs
 ```
 
-Update the manager: copy `devenv/` to `~agentdev/stacks/devenv` (keeping `data/` and `.env`),
-then `docker compose up -d --build`.
+Update the manager: copy `devenv/` to the stack folder (keeping `data/` and `.env`), then
+`docker compose up -d --build`. After changing the published address or ports, check both
+the manager connection and each project's SSH environment in Paperclip.
 
-kb-tools' environment predates per-project keys and uses the shared fallback key
-(`data/keys/paperclip`, `DEVENV_PUBKEY`). Remove the fallback once it has its own key.
+A project created without its own key uses the shared fallback key (`DEVENV_PUBKEY`). Give it
+its own key and remove the fallback when nothing needs it.

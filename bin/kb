@@ -8,34 +8,59 @@
 # It uses the kb-tools Docker image when Docker has it (laptops, hosts). Without Docker
 # (dev containers) it uses a local install in $KB_TOOLS_HOME, which this script creates:
 #
-#   KB_TOOLS_SOURCE=git+https://github.com/<owner>/kb-tools tools/kb --install [ref]
+#   tools/kb --install [--full] [ref]      # source from tools/kb.conf or KB_TOOLS_SOURCE
+#
+# The default (light) install has what check, work, catalog, report, log and inventory
+# need. Extraction and figures run on the Paperclip machine through the kb-tools MCP
+# server; --full (or KB_TOOLS_EXTRAS=extract) installs them here too.
 #
 # KB_TOOLS_IMAGE overrides the image (default: kb-tools:latest).
 # KB_TOOLS_HOME is the local install (default: .kb-tools in the user's home from the
 #   password database, which persists in agent dev containers even when $HOME is per-run).
-# KB_TOOLS_SOURCE is the pip source to install from; KB_TOOLS_REF the default ref (main).
+# KB_TOOLS_SOURCE is the pip source to install from. Without it, --install reads `source=`
+#   from tools/kb.conf in the repository (written by `kb scaffold`), then from the last
+#   install's $KB_TOOLS_HOME/install.conf. KB_TOOLS_REF (or `ref=` in tools/kb.conf) is the
+#   default ref (main).
 set -eu
 IMAGE="${KB_TOOLS_IMAGE:-kb-tools:latest}"
 if [ -z "${KB_TOOLS_HOME:-}" ]; then
   USER_HOME="$(getent passwd "$(id -un)" 2>/dev/null | cut -d: -f6)" || USER_HOME=""
   KB_TOOLS_HOME="${USER_HOME:-$HOME}/.kb-tools"
 fi
-
-if [ "${1:-}" = "--install" ]; then
-  REF="${2:-${KB_TOOLS_REF:-main}}"
-  if [ -z "${KB_TOOLS_SOURCE:-}" ]; then
-    echo "kb: set KB_TOOLS_SOURCE to the kb-tools pip source, for example" >&2
-    echo "    KB_TOOLS_SOURCE=git+https://github.com/<owner>/kb-tools tools/kb --install $REF" >&2
-    exit 2
-  fi
-  echo "kb: installing $KB_TOOLS_SOURCE@$REF into $KB_TOOLS_HOME" >&2
-  python3 -m venv --clear "$KB_TOOLS_HOME"
-  "$KB_TOOLS_HOME/bin/pip" install --quiet --disable-pip-version-check "$KB_TOOLS_SOURCE@$REF"
-  exec "$KB_TOOLS_HOME/bin/kb" --version
-fi
-
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 REL="$(cd "$(pwd)" && pwd | sed "s#^$ROOT##")"
+
+setting() { # setting KEY FILE: the value of KEY=... in FILE, if any
+  [ -f "$2" ] && sed -n "s/^$1=//p" "$2" | head -n 1 | tr -d '[:space:]' || true
+}
+
+if [ "${1:-}" = "--install" ]; then
+  shift
+  EXTRAS="${KB_TOOLS_EXTRAS:-}"
+  if [ "${1:-}" = "--full" ]; then
+    EXTRAS="extract"
+    shift
+  fi
+  REF="${1:-${KB_TOOLS_REF:-$(setting ref "$ROOT/tools/kb.conf")}}"
+  REF="${REF:-main}"
+  SOURCE="${KB_TOOLS_SOURCE:-$(setting source "$ROOT/tools/kb.conf")}"
+  SOURCE="${SOURCE:-$(setting source "$KB_TOOLS_HOME/install.conf")}"
+  case "$SOURCE" in
+    ""|*"<"*)
+      echo "kb: no kb-tools source. Set source= in tools/kb.conf (kb scaffold writes it) or run" >&2
+      echo "    KB_TOOLS_SOURCE=git+https://github.com/<owner>/kb-tools tools/kb --install $REF" >&2
+      exit 2 ;;
+  esac
+  case "$EXTRAS" in
+    "") SPEC="$SOURCE@$REF"; KIND="light" ;;
+    *) SPEC="kb-tools[$EXTRAS] @ $SOURCE@$REF"; KIND="full ($EXTRAS)" ;;
+  esac
+  echo "kb: installing $SOURCE@$REF, $KIND, into $KB_TOOLS_HOME" >&2
+  python3 -m venv --clear "$KB_TOOLS_HOME"
+  "$KB_TOOLS_HOME/bin/pip" install --quiet --disable-pip-version-check "$SPEC"
+  printf 'source=%s\nref=%s\nextras=%s\n' "$SOURCE" "$REF" "$EXTRAS" > "$KB_TOOLS_HOME/install.conf"
+  exec "$KB_TOOLS_HOME/bin/kb" --version
+fi
 
 if command -v docker >/dev/null 2>&1 && docker image inspect "$IMAGE" >/dev/null 2>&1; then
   TTY=""
@@ -54,5 +79,5 @@ fi
 echo "kb: no kb-tools found. Either build the Docker image $IMAGE from the kb-tools repository:" >&2
 echo "    git clone <kb-tools repo> && docker build -t kb-tools:latest kb-tools" >&2
 echo "or, without Docker (dev containers), install it locally into $KB_TOOLS_HOME:" >&2
-echo "    KB_TOOLS_SOURCE=git+https://github.com/<owner>/kb-tools tools/kb --install main" >&2
+echo "    tools/kb --install main" >&2
 exit 1

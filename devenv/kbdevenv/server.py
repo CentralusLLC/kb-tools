@@ -14,8 +14,9 @@ sshd is published on HOST_IP in the configured port range.
 
 Environment:
   DEVENV_TOKEN      required bearer token (set in the Paperclip connection, not given to agents)
-  DEVENV_HOST_IP    address to publish sshd on (default <host-ip>)
-  DEVENV_PORTS      port range for dev containers (default <port-range>)
+  DEVENV_HOST_IP    address to publish sshd on (default 127.0.0.1; set the address the
+                    Paperclip server reaches this host on)
+  DEVENV_PORTS      port range for dev containers (default 24000-24099)
   DEVENV_DATA       state, logs and build contexts (default /data)
   DEVENV_PUBKEY     fallback public key for projects created without one
                     (default /data/keys/paperclip.pub; optional)
@@ -37,9 +38,11 @@ from datetime import datetime, timezone
 from importlib import resources
 from pathlib import Path
 
+DEFAULT_HOST_IP = "127.0.0.1"
+DEFAULT_PORTS = "24000-24099"
 DATA = Path(os.environ.get("DEVENV_DATA", "/data"))
-HOST_IP = os.environ.get("DEVENV_HOST_IP", "<host-ip>")
-PORTS = tuple(int(p) for p in os.environ.get("DEVENV_PORTS", "<port-range>").split("-"))
+HOST_IP = os.environ.get("DEVENV_HOST_IP", "").strip() or DEFAULT_HOST_IP
+PORTS = tuple(int(p) for p in (os.environ.get("DEVENV_PORTS", "").strip() or DEFAULT_PORTS).split("-"))
 PUBKEY = Path(os.environ.get("DEVENV_PUBKEY", str(DATA / "keys" / "paperclip.pub")))
 LIMITS = (os.environ.get("DEVENV_MEMORY", "8g"), os.environ.get("DEVENV_CPUS", "6"), os.environ.get("DEVENV_PIDS", "4096"))
 STATE = DATA / "state.json"
@@ -417,17 +420,23 @@ def build_server(host: str, port: int):
     return mcp
 
 
-def main() -> None:
+def parse_args(argv: list[str] | None = None):
+    """Where the manager listens inside its container. The address and port published on
+    the host come from DEVENV_HOST_IP and DEVENV_MANAGER_PORT in compose.yaml."""
     import argparse
 
+    parser = argparse.ArgumentParser(prog="devenv-manager")
+    parser.add_argument("--host", default="127.0.0.1", help="listen address (the image passes 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8780)
+    return parser.parse_args(argv)
+
+
+def main() -> None:
     import uvicorn
     from starlette.middleware.base import BaseHTTPMiddleware
     from starlette.responses import JSONResponse
 
-    parser = argparse.ArgumentParser(prog="devenv-manager")
-    parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--port", type=int, default=8780)
-    args = parser.parse_args()
+    args = parse_args()
     token = os.environ.get("DEVENV_TOKEN", "").strip()
     if len(token) < 24:
         raise SystemExit("DEVENV_TOKEN (at least 24 characters) is required")

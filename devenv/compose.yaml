@@ -1,6 +1,8 @@
-# devenv manager, run as the isolated `agentdev` account (rootless Docker, its own uid).
-# Deployed to /home/agentdev/stacks/devenv. Paperclip (centralus) reaches it at
-# http://<host-ip>:<manager-port>/mcp with the bearer token in DEVENV_TOKEN.
+# devenv manager, run as an isolated account with its own rootless Docker (see
+# docs/environments/agent-dev-environments.md). Every deployment value comes from an
+# untracked .env next to this file: copy .env.example to .env and fill it in.
+# Paperclip reaches the manager at http://${DEVENV_HOST_IP}:${DEVENV_MANAGER_PORT}/mcp with
+# the bearer token in DEVENV_TOKEN.
 name: devenv
 services:
   manager:
@@ -9,13 +11,17 @@ services:
     restart: unless-stopped
     environment:
       DEVENV_TOKEN: ${DEVENV_TOKEN:?set in .env}
-      DEVENV_HOST_IP: <host-ip>
-      DEVENV_PORTS: <port-range>
+      DEVENV_HOST_IP: ${DEVENV_HOST_IP:-127.0.0.1}
+      DEVENV_PORTS: ${DEVENV_PORTS:-24000-24099}
+      DEVENV_MEMORY: ${DEVENV_MEMORY:-8g}
+      DEVENV_CPUS: ${DEVENV_CPUS:-6}
+      DEVENV_PIDS: ${DEVENV_PIDS:-4096}
+      DEVENV_SWAP_WAIT: ${DEVENV_SWAP_WAIT:-21600}
     volumes:
       - ${XDG_RUNTIME_DIR:?}/docker.sock:/var/run/docker.sock
       - ./data:/data
     ports:
-      - "<host-ip>:<manager-port>:8780"
+      - "${DEVENV_HOST_IP:-127.0.0.1}:${DEVENV_MANAGER_PORT:-8780}:8780"
     mem_limit: 1g
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8780/health', timeout=3)"]

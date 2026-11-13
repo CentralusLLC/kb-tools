@@ -101,7 +101,7 @@ Every item has a `kind`:
 
 ## Commands
 
-Use `tools/kb work` (or the `kb_work_*` MCP tools) rather than creating files by hand:
+Use `tools/kb work` (on the Paperclip machine, the `kb_work_*` MCP tools) rather than creating files by hand:
 
 ```sh
 tools/kb work new-epic "Self-serve onboarding" --by <you> --priority high

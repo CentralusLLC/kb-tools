@@ -2,7 +2,7 @@
 
 The template lives in kbtools/template/. Path parts named `dot-<x>` install as `.<x>`
 (kept that way so the template's own .gitignore files don't affect this repository).
-Placeholders: {{PROJECT}}, {{DATE}}, {{NOW}}, {{ACTOR}}, {{VERSION}}.
+Placeholders: {{PROJECT}}, {{DATE}}, {{NOW}}, {{ACTOR}}, {{VERSION}}, {{KB_TOOLS_SOURCE}}.
 Existing files are never overwritten.
 """
 
@@ -13,9 +13,10 @@ from importlib import resources
 from pathlib import Path
 
 from . import __version__
+from .version import install_source
 from .common import now_iso, today
 
-TEXT_SUFFIXES = {".md", ".csv", ".txt", ".json", ".yaml", ".yml"}
+TEXT_SUFFIXES = {".md", ".csv", ".txt", ".json", ".yaml", ".yml", ".conf"}
 EXECUTABLE = {"tools/kb"}
 
 POINTER_SNIPPET = """\
@@ -54,6 +55,7 @@ def scaffold(target: Path, *, project: str, actor: str, dry_run: bool = False) -
         "{{NOW}}": now_iso(),
         "{{ACTOR}}": actor,
         "{{VERSION}}": __version__,
+        "{{KB_TOOLS_SOURCE}}": install_source(),
     }
     result: dict[str, list[str]] = {"created": [], "skipped": []}
     for template_path, node in template_files():
