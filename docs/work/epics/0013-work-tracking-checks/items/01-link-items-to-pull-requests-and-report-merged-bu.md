@@ -11,7 +11,7 @@ work_status: done
 priority: high
 depends_on: []
 links: 
-  github: "#16"
+  github: "#1"
   jira: ""
   paperclip: "CEN-50"
 generated: 
@@ -43,5 +43,10 @@ merged, and `kb check` was clean (finding 7). Nothing links an item to its pull 
 ## Notes
 
 `in_progress` and `blocked` items are not flagged: an item can take several pull requests
-(0010-10 took #11 and #15). The tracker-based drift report stays in
+(0010-10 took #11 and #15 in `kb-tools-private`). The tracker-based drift report stays in
 [0001-04](../../0001-tracker-sync/items/04-drift-report-from-trackers.md).
+
+The repository moved to a fresh public `CentralusLLC/kb-tools` (CEN-34), so pull request
+numbers restarted at #1 while the history still holds the old `(#8)`…`(#15)`. A linked number
+therefore only counts as merged when its merge commit names the item, its epic, or no work id,
+and links to another repository's pull request (the old `kb-tools-private`) are not matched.

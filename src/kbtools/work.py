@@ -36,7 +36,9 @@ TRACKERS = ("github", "jira", "paperclip")
 STALE_WHEN_MERGED = {"backlog", "todo", "in_review"}
 # GitHub's squash-merge title ("[0007-02] Title (#41)", several ids allowed) and merge-commit title.
 SQUASH_SUBJECT = re.compile(r"^((?:\[\d{4}-\d{2}\]\s*)*).*\(#(\d+)\)$")
-MERGE_SUBJECT = re.compile(r"^Merge pull request #(\d+) from \S+?/(\d{4}-\d{2})-")
+# The branch names an item ("0007-02-...") or only an epic ("0007-...").
+MERGE_SUBJECT = re.compile(r"^Merge pull request #(\d+) from \S+?/(?:(\d{4}-\d{2})-|(\d{4})-)")
+GITHUB_REPO = re.compile(r"github\.com[:/]([^/\s]+)/([^/\s]+?)(?:\.git)?(?:/pull/\d+/?)?/?$", re.I)
 STARTED_ITEM = {"in_progress", "in_review", "done"}
 STARTED_EPIC = {"in_progress", "done"}
 UNCHECKED = re.compile(r"(?m)^\s*[-*] \[ \]")
@@ -184,11 +186,19 @@ def validate(repo: Repo) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def merged_pull_requests(repo: Repo) -> tuple[dict[str, set[str]], set[str]] | None:
+@dataclass
+class MergedPullRequests:
+    """Pull requests merged into the checked-out branch, as read from the git history."""
+
+    by_item: dict[str, set[str]]           # item id named in the merge commit -> {"#N", ...}
+    owners: dict[str, list[set[str]]]      # "N" -> the work ids each merge commit for #N names
+    repo: str | None                       # "owner/name" of the origin remote, when known
+
+
+def merged_pull_requests(repo: Repo) -> MergedPullRequests | None:
     """Pull requests merged into the checked-out branch, read from the local git history.
 
-    Returns ({item id: {"#N", ...}}, {all merged numbers}), or None when there is no git
-    (the kb-tools runtime image has none) or no repository.
+    Returns None when there is no git (the kb-tools runtime image has none) or no repository.
     """
     git_dir = repo.root / ".git"
     if not git_dir.exists() or not shutil.which("git"):
@@ -196,31 +206,52 @@ def merged_pull_requests(repo: Repo) -> tuple[dict[str, set[str]], set[str]] | N
     try:
         result = subprocess.run(["git", f"--git-dir={git_dir}", "log", "--format=%s"],
                                 capture_output=True, text=True, timeout=60)
+        remote = subprocess.run(["git", f"--git-dir={git_dir}", "config", "--get", "remote.origin.url"],
+                                capture_output=True, text=True, timeout=60)
     except (OSError, subprocess.SubprocessError):
         return None
     if result.returncode != 0:
         return None
-    by_item: dict[str, set[str]] = {}
-    numbers: set[str] = set()
+    merged = MergedPullRequests({}, {}, _github_repo(remote.stdout) if remote.returncode == 0 else None)
     for subject in result.stdout.splitlines():
         subject = subject.strip()
         if squash := SQUASH_SUBJECT.match(subject):
-            numbers.add(squash.group(2))
-            for ident in re.findall(r"\d{4}-\d{2}", squash.group(1)):
-                by_item.setdefault(ident, set()).add(f"#{squash.group(2)}")
+            number, idents = squash.group(2), set(re.findall(r"\d{4}-\d{2}", squash.group(1)))
         elif merge := MERGE_SUBJECT.match(subject):
-            numbers.add(merge.group(1))
-            by_item.setdefault(merge.group(2), set()).add(f"#{merge.group(1)}")
-    return by_item, numbers
+            number, idents = merge.group(1), {merge.group(2) or merge.group(3)}
+        else:
+            continue
+        merged.owners.setdefault(number, []).append(idents)
+        for ident in idents:
+            if "-" in ident:
+                merged.by_item.setdefault(ident, set()).add(f"#{number}")
+    return merged
 
 
-def _merged_for(item: Item, merged: tuple[dict[str, set[str]], set[str]]) -> list[str]:
-    by_item, numbers = merged
-    found = set(by_item.get(item.id, set()))
+def _github_repo(url: str) -> str | None:
+    """"owner/name" from a GitHub remote or pull request URL (https or ssh), else None."""
+    match = GITHUB_REPO.search(url.strip())
+    return f"{match.group(1)}/{match.group(2)}".lower() if match else None
+
+
+def _merged_for(item: Item, merged: MergedPullRequests) -> list[str]:
+    """Merged pull requests for an item: named in a merge commit, or linked from links.github.
+
+    A linked number counts only when a merge commit for it names this item or its epic, or
+    names no work id at all. Pull request numbers restart when a project moves to a new
+    repository, so the history can hold an old "(#8)" from another item; a link to another
+    repository's pull request (for example the old one) is not looked up in local history.
+    """
+    found = set(merged.by_item.get(item.id, set()))
     links = item.data.get("links")
-    linked = PR_NUMBER.search(str(links.get("github") or "")) if isinstance(links, dict) else None
-    if linked and linked.group(1) in numbers:
-        found.add(f"#{linked.group(1)}")
+    link = str(links.get("github") or "") if isinstance(links, dict) else ""
+    linked = PR_NUMBER.search(link)
+    link_repo = _github_repo(link)
+    other_repo = bool(merged.repo and link_repo and link_repo != merged.repo)
+    if linked and not other_repo:
+        own = {item.id, item.id.split("-")[0]}
+        if any(not idents or idents & own for idents in merged.owners.get(linked.group(1), [])):
+            found.add(f"#{linked.group(1)}")
     return sorted(found, key=lambda pr: int(pr[1:]))
 
 

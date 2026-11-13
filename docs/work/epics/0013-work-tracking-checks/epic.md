@@ -36,7 +36,7 @@ findings 7–13 and 21):
 - epics stay `in_progress` after every item is done, and skipped item ids go unnoticed.
 
 kb-tools has the same drift itself (0010-12 and 0010-13 are `in_review` with PRs #10 and #8
-merged). The repository is meant to be the source of truth for what is done (ADR 0004), so
+merged in the old repository, now `CentralusLLC/kb-tools-private`). The repository is meant to be the source of truth for what is done (ADR 0004), so
 these gaps cost every project reviews and status clean-ups (0012-02 was one). Finding 15 adds a
 related documentation gap: the templates describe Paperclip as if it were required.
 

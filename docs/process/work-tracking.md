@@ -134,6 +134,12 @@ Merged pull requests are read from the local git history: GitHub's squash-merge 
 `0007-02-...` branch, plus the pull request in an item's `links.github`. Without git (for
 example in the kb-tools Docker image) that check is skipped.
 
+A linked pull request counts as merged only if a merge commit with its number names that item
+or its epic, or names no work id at all. Pull request numbers restart when a project moves to a
+new repository, so an old `[0003-01] … (#8)` in the history doesn't make a new `#8` look merged.
+Link to a pull request in another repository by its full URL; those links are not looked up in
+the local history.
+
 ## Lifecycle
 
 1. **Propose:** `new-epic` and fill in `epic.md`: the business need and how success is measured.

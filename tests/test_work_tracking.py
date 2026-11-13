@@ -124,6 +124,37 @@ def test_check_warns_about_open_items_whose_pull_request_merged(tmp_path):
     assert not any("0001-01" in w or "01-signup-form" in w for w in warnings), warnings
 
 
+@needs_git
+def test_old_pull_request_numbers_do_not_count_as_merges_of_new_ones(tmp_path):
+    """Numbers restart when a project moves repository (kb-tools' own history: old #1 and #8)."""
+    repo = _project(tmp_path, git=True)
+    subprocess.run(["git", "-C", str(tmp_path), "remote", "add", "origin",
+                    "git@github.com:acme/shop.git"], check=True)
+    work.new_epic(repo, "Onboarding", by="t", status="in_progress")
+    work.new_epic(repo, "Billing", by="t", status="in_progress")
+    for path in (repo.docs / "work" / "epics").glob("*/*.md"):
+        _fill_in(path)
+    _item(repo, "0001", "Signup form")
+    _item(repo, "0002", "Invoices")
+    _item(repo, "0002", "Refunds")
+    work.set_status(repo, "0002-01", "in_review", links={"github": "#1"})   # new repo's open #1
+    work.set_status(repo, "0002-02", "in_review", links={"github": "#8"})   # new repo's open #8
+    work.set_status(repo, "0001-01", "in_review", links={"github": "https://github.com/acme/shop-old/pull/9"})
+    _commit(repo, "Merge pull request #1 from acme/0001-onboarding")       # old repo, epic branch
+    _commit(repo, "[0001-02] Login (#8)")                                  # old repo, another item
+    _commit(repo, "Unrelated fix (#9)")                                    # old repo, no work id
+    _, warnings = run_checks(repo)
+    assert not any("is merged but work_status" in w for w in warnings), warnings
+    assert work._github_repo("https://github.com/Acme/Shop/pull/3") == "acme/shop"
+
+    _commit(repo, "[0002-01] Invoices (#1)")                               # new #1 merges
+    _commit(repo, "Merge pull request #8 from acme/0002-refunds")          # new #8, epic branch
+    _, warnings = run_checks(repo)
+    stale = sorted(w.split("pull request ", 1)[1].split(" ", 1)[0] + w.split("kb work set ", 1)[1][:7]
+                   for w in warnings if "is merged but work_status" in w)
+    assert stale == ["#10002-01", "#80002-02"], warnings
+
+
 def test_merged_check_is_skipped_without_git(tmp_path, monkeypatch):
     repo = _project(tmp_path)  # .git is an empty folder: not a repository
     assert work.merged_pull_requests(repo) is None

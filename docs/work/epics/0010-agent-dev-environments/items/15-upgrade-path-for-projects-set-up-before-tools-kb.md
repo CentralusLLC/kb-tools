@@ -11,7 +11,7 @@ work_status: done
 priority: critical
 depends_on: ["0010-13", "0010-11"]
 links: 
-  github: "https://github.com/CentralusLLC/kb-tools/pull/12"
+  github: "https://github.com/CentralusLLC/kb-tools-private/pull/12"
   jira: ""
   paperclip: "CEN-34"
 generated: 

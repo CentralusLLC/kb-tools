@@ -11,7 +11,7 @@ work_status: done
 priority: medium
 depends_on: []
 links: 
-  github: "https://github.com/CentralusLLC/kb-tools/pull/14"
+  github: "https://github.com/CentralusLLC/kb-tools-private/pull/14"
   jira: ""
   paperclip: "CEN-45"
 generated: 
