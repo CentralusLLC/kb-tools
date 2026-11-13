@@ -3,7 +3,7 @@ type: Work Item
 id: "0010-13"
 epic: "0010"
 title: "Make deployment-specific settings configurable"
-description: "Keep the devenv manager and the the Paperclip host deployment, but supply every deployment-specific host, IP, port and URL through environment variables with neutral defaults, so the public repository carries no Centralus values."
+description: "Keep the devenv manager and the Paperclip host deployment, but supply every deployment-specific host, IP, port and URL through environment variables with neutral defaults, so the public repository carries no Centralus values."
 tags: [work-item]
 status: draft
 kind: story
@@ -25,7 +25,7 @@ Part of [epic 0010](../epic.md) ([plan](../plan.md)).
 
 ## What and why
 
-The owner wants to keep the devenv manager and the the Paperclip host deployment in kb-tools, not delete them,
+The owner wants to keep the devenv manager and the Paperclip host deployment in kb-tools, not delete them,
 so the public repository has to stop hard-coding Centralus' values (private IPs, ports,
 hostnames, internal MCP URLs) and read them from configuration instead. Environment variables
 are the preferred mechanism. Centralus' real values live outside the repository: non-secret
@@ -81,10 +81,10 @@ the MCP server, light `tools/kb` in project containers):
 - [x] Light install by default, `--full` for extraction; light commands tested without the
       extraction libraries.
 - [x] `kb --version` includes the ref and commit; the install source is stored, not repeated.
-- [ ] Before merge, the exact list of variables the Paperclip host's `.env` needs (names and what each
+- [x] Before merge, the exact list of variables the Paperclip host's `.env` needs (names and what each
       holds, no values) is posted on the Paperclip task so the admin agent can write it on
-      the Paperclip host; anything needed on the Paperclip host or in Paperclip is requested through Chief.
-- [ ] The the Paperclip host deployment is verified working with its values supplied externally (record
+      the host; anything needed on the Paperclip host or in Paperclip is requested through Chief.
+- [ ] The Paperclip host deployment is verified working with its values supplied externally (record
       the check in the epic plan's Verification section).
 
 ## Notes
@@ -94,7 +94,7 @@ the MCP server, light `tools/kb` in project containers):
   Original note: after the 0010-11 audit (which lists what to make configurable) and before the
   0010-10 history rewrite, so the rewrite can replace the old values in history once.
 - Decided 2026-11-06 (owner via Chief, CEN-12/CEN-14): no private repository for now.
-  Centralus' real non-secret values (the Paperclip host IP, ports, host names, MCP address) live only in
+  Centralus' real non-secret values (host IP, ports, host names, MCP address) live only in
   the untracked `.env` on the Paperclip host; real secrets stay in Paperclip secrets. Nothing goes in any
   repository. Internal-only deployment notes removed from the public docs go into a
   Paperclip task document, not the repository.

@@ -50,7 +50,7 @@ Known tree hits (2026-11-06):
 - [ ] The template-leak guard still works without naming internal projects in the repository
       (for example an untracked or environment-supplied denylist).
 - [ ] The owner explicitly approves the force-push before it happens.
-- [ ] Open PRs, other clones (the the Paperclip host sidecar, agent workspaces, dev containers) and the v0.1.0
+- [ ] Open PRs, other clones (the Paperclip host's sidecar, agent workspaces, dev containers) and the v0.1.0
       provenance (commit 449e64f) are listed, and each is handled (rebased, re-cloned or
       re-tagged).
 

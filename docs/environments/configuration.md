@@ -28,6 +28,12 @@ Secret values never appear here ([Security](../process/security.md)).
 | `KB_TOOLS_EXTRAS` | Extras to install; `extract` is the same as `--install --full` | empty (light install) | no |
 | `tools/kb.conf` | Per-project `source=` and `ref=`, written by `kb scaffold` from where kb-tools was installed (else the public repository) | written by `kb scaffold` | no |
 
+## `kb check`
+
+| Setting | Purpose | Default | Secret? |
+| --- | --- | --- | --- |
+| `KB_SCAN_DENYLIST` | File of extra patterns the secret and internal-reference scan treats as errors (one case-insensitive regular expression per line, `#` comments). Keep it outside the repository it protects | none (built-in rules only) | no, but it names internal values, so keep it out of any repository |
+
 ## `kb serve` (MCP server)
 
 Command-line flags override the environment.

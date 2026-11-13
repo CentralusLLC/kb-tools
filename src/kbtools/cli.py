@@ -311,7 +311,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--text", help="words that must all appear in path, title, description or tags")
     p.set_defaults(func=cmd_catalog)
 
-    p = sub.add_parser("check", help="validate the ingest log, OKF front matter, links, images and diagrams")
+    p = sub.add_parser("check", help="validate the ingest log, OKF front matter, links, images, diagrams and work items, and scan for secrets")
     p.add_argument("--strict", action="store_true", help="fail on warnings too")
     p.set_defaults(func=cmd_check)
 

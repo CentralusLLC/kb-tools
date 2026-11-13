@@ -20,7 +20,7 @@ GitHub Actions workflow: on pull requests build the test target for both archite
 
 ## Design
 
-The wrapper gains a pinned default such as `ghcr.io/<owner>/kb-tools:0.2.0`; `kb scaffold` writes the version it was run with. The the Paperclip host sidecar switches from a local build to the published image.
+The wrapper gains a pinned default such as `ghcr.io/<owner>/kb-tools:0.2.0`; `kb scaffold` writes the version it was run with. The Paperclip host's sidecar switches from a local build to the published image.
 
 ## Items and sequencing
 

@@ -61,12 +61,12 @@ def test_server_settings_from_environment():
 def test_serve_flags_override_environment(monkeypatch):
     seen = {}
     monkeypatch.setattr(server, "serve", lambda **kwargs: seen.update(kwargs))
-    monkeypatch.setenv("KB_MCP_HOST", "10.0.0.1")
+    monkeypatch.setenv("KB_MCP_HOST", "192.0.2.1")
     monkeypatch.setenv("KB_MCP_PORT", "9001")
     monkeypatch.setenv("KB_REPOS_ROOT", "/checkouts")
     args = build_parser().parse_args(["serve"])
     args.func(args)
-    assert seen == {"host": "10.0.0.1", "port": 9001, "repos_root": Path("/checkouts"), "allowed_roots": []}
+    assert seen == {"host": "192.0.2.1", "port": 9001, "repos_root": Path("/checkouts"), "allowed_roots": []}
     args = build_parser().parse_args(["serve", "--host", "127.0.0.2", "--port", "8000", "--allowed-root", "/x"])
     args.func(args)
     assert (seen["host"], seen["port"], seen["allowed_roots"]) == ("127.0.0.2", 8000, [Path("/x")])

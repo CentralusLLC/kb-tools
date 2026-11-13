@@ -88,7 +88,7 @@ tools/kb figure extracted/<pkg>/renders/page-004.png --crop 0.16,0.15,0.47,0.87 
     --alt "..." --caption "..." --source "docs/sources/deck.pptx, slide 4"
 tools/kb log deck.pptx --status ingested --by claude-code/opus-5.5 \
     --outputs "docs/domains/world/world-model.md;data/terrain/terrain.csv"
-tools/kb check                                  # log, OKF, links, images, diagram descriptions
+tools/kb check                                  # log, OKF, links, images, diagrams, secrets
 tools/kb report                                 # verification level and age per page
 ```
 
@@ -104,7 +104,7 @@ tools/kb report                                 # verification level and age per
 | `log` | Updates one ingest-log row safely (status, outputs, notes, rehash). |
 | `work new-epic` / `new-item` / `set` / `list` / `index` | Repository-native work tracking in `docs/work/`: epics (`NNNN`) with `epic.md` (including acceptance and retrospective) and `plan.md`, items (`NNNN-NN`, `kind` story/task/bug/spike/chore) in `items/`, `work_status` per epic and item, and a generated roadmap. See the template's `docs/process/work-tracking.md`. |
 | `catalog` | One record per page: path, section, type, title, description, tags, status, `work_status`, trust tier, last verification. `--write` regenerates the committed `docs/catalog.md` (Markdown grouped by section; only fields that change with the pages, so it never drifts on its own). Filters (`--type`, `--section`, `--tag`, `--tier`, `--status`, `--work-status`, `--text`) print `md`, `json` or `jsonl` on demand, so no JSON copy is stored and `jq` is optional. |
-| `check` | Checks the ingest log (statuses, hashes, outputs), OKF front matter, links, images (alt text), that every Mermaid diagram is followed by an element list or table, the work tree (IDs, statuses, dependencies, roadmap freshness), and catalog freshness. Exits non-zero on errors. |
+| `check` | Checks the ingest log (statuses, hashes, outputs), OKF front matter, links, images (alt text), that every Mermaid diagram is followed by an element list or table, the work tree (IDs, statuses, dependencies, roadmap freshness), catalog freshness, and tracked files for secrets (errors) and private addresses (warnings), plus any `KB_SCAN_DENYLIST` patterns. Exits non-zero on errors. |
 | `report` | Gives each page a trust tier (human, machine or unverified), its last verification, its age, and flags (`changed-since-verified`, `stale`, `verification-old`, `deprecated`). |
 | `serve` | Runs an MCP server (streamable HTTP) exposing the commands as tools. |
 

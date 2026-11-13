@@ -30,7 +30,7 @@ stores the private half through a secret proposal. Lifecycle tools are gated wit
 Alternatives rejected:
 - A custom Paperclip image with all toolchains: one image for every project, and a Paperclip
   restart for every package.
-- Giving agents the Docker socket: control of every centralus container, including the database
+- Giving agents the Docker socket: control of every container on the host, including the database
   and secrets.
 - A sandbox-provider plugin: the most native option, deferred until this has proven itself
   (0010-09, backlog). Paperclip ships providers for Kubernetes, Daytona, E2B and others, but
@@ -41,9 +41,9 @@ Alternatives rejected:
 ## Design
 
 See [Agent dev environments](../../../environments/agent-dev-environments.md):
-- account `agentdev` (its own uid) with rootless Docker and org egress rules;
-- manager on `<host-ip>:<manager-port>`, protected by a bearer token;
-- dev containers on `<host-ip>:<port-range>`, each with a home volume, stable host keys and limits;
+- account `agentdev` with rootless Docker and org egress rules;
+- manager on `<host-ip>:<manager-port>` (`DEVENV_HOST_IP`, `DEVENV_MANAGER_PORT`), protected by a bearer token;
+- dev containers on `<host-ip>:<port range>` (`DEVENV_PORTS`), each with a home volume, stable host keys and limits;
 - tools: `devenv_status`, `devenv_create`, `devenv_rebuild`, `devenv_install` (system packages,
   persisted for rebuilds), `devenv_stop`, and `devenv_delete` (destructive, so Paperclip
   quarantines it).

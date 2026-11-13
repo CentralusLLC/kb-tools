@@ -26,6 +26,7 @@ who use the product: what changed for them, not how it was built.
 - [0010-13] Guide for installing kb-tools as an add-on in any Paperclip environment (`docs/environments/paperclip-add-on.md`), and one table of every setting (`docs/environments/configuration.md`).
 - [0010-13] MCP tools accept a repository name (`repo=gameworld` or `owner/gameworld`), looked up under the server's `KB_REPOS_ROOT` (default `/repos`).
 - [0010-13] `kb --version` shows the git ref and commit it was installed from, for example `0.1.0+dev.3061f26`.
+- [0010-11] `kb check` scans tracked files for secrets (errors) and private or tailnet addresses (warnings), with an optional deny list outside the repository (`KB_SCAN_DENYLIST`) for organisation-specific names.
 - [0011-01] The `kb_catalog` MCP tool can regenerate `docs/catalog.md` (`write=true`), like `kb catalog --write`.
 
 ## Changed

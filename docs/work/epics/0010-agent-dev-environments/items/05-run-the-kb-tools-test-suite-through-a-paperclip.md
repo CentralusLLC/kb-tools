@@ -48,7 +48,7 @@ The one follow-up, `tools/kb` not working inside dev containers, was solved by
 The kb-tools Developer agent ran this through Paperclip's SSH environment:
 
 - **Where:** `hostname` `devenv-kb-tools`, user `agent`, run workspace
-  `/home/agent/workspace/.paperclip-runtime/runs/1c1270d1-…/workspace`. The container is
+  `/home/agent/workspace/.paperclip-runtime/runs/<run-id>/workspace`. The container is
   the Dockerfile `dev` stage (PyYAML, python-docx, python-pptx, openpyxl, Pillow, mcp and
   `soffice` present). `pip show kb-tools`: not installed in the image.
 - **Branch:** `git fetch origin` through the Paperclip GitHub broker worked. Checked out

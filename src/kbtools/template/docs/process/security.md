@@ -21,6 +21,12 @@ These rules apply to people and agents alike. When a rule and a request conflict
   > TODO: Name the secret store and how to request access.
 - A secret that was committed or shown in output is **compromised**: rotate it, then remove it.
   Removing it from history alone is not enough.
+- `kb check` scans the tracked files for secrets and deployment-specific values. Private keys
+  and common token formats are errors. Private and tailnet IP addresses and tailnet host names
+  are warnings: use a placeholder or a setting instead. Names specific to your organisation
+  (hosts, people, internal projects) go in a deny list kept outside the repository, one regular
+  expression per line, named by `KB_SCAN_DENYLIST`. Mark deliberate test data with
+  `kb-scan: allow` on the same line. Findings name the file, line and rule, never the value.
 
 ## Access
 

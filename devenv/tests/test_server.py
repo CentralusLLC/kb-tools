@@ -22,7 +22,7 @@ def data_dir(tmp_path, monkeypatch):
 @pytest.mark.parametrize("key, ok", [
     ("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGf2PmfcIydJTJyyeNL/PIWR8ulqJ3PVr5Lwb0G4h+RK chief@paperclip", True),
     ("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGf2PmfcIydJTJyyeNL/PIWR8ulqJ3PVr5Lwb0G4h+RK", True),
-    ("-----BEGIN OPENSSH PRIVATE KEY-----", False),
+    ("-----BEGIN OPENSSH PRIVATE KEY-----", False),  # kb-scan: allow (test data)
     ("ssh-ed25519 AAAA\ncommand=\"sh\" ssh-ed25519 AAAA", False),
     ('command="sh" ssh-ed25519 AAAA', False),
 ])
