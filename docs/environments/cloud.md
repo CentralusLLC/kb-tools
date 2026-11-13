@@ -13,7 +13,8 @@ generated:
 
 | Environment | What runs there |
 | --- | --- |
-| the Paperclip host, Paperclip stack (`<stack folder>`, service `kb-tools`) | MCP sidecar at `http://<kb-mcp-url>` on the stack network, allowed root `/paperclip/instances/default`; image built on the Paperclip host from `<stack folder>` |
+| Paperclip host, Paperclip's compose stack (service `kb-tools`) | MCP server at `<kb-mcp-url>` on the stack network, image built on the host from a kb-tools checkout; set up as in [Install kb-tools as an add-on in a Paperclip environment](paperclip-add-on.md). Its values are in the host's untracked `.env` ([Configuration](configuration.md)). |
+| Paperclip host, `agentdev` account | The devenv manager ([Agent dev environments](agent-dev-environments.md)) |
 
 No image registry yet; see the [roadmap](../work/index.md).
 

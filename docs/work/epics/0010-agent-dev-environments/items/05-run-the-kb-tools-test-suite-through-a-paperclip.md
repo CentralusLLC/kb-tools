@@ -7,7 +7,7 @@ description: "Proves a Paperclip agent can run the kb-tools test suite in its re
 tags: [work-item]
 status: draft
 kind: spike
-work_status: in_progress
+work_status: done
 priority: medium
 depends_on: []
 links: 
@@ -25,26 +25,34 @@ Part of [epic 0010](../epic.md) ([plan](../plan.md)).
 
 ## What and why
 
-> TODO: The question to answer, and the time box.
+Question: can a Paperclip agent run the kb-tools test suite inside its remote dev container,
+through a Paperclip SSH environment, and push its commits back to GitHub?
+
+Answer: **yes** (Paperclip CEN-6, done 2026-11-05). The run below passed 18 tests in the dev
+container and pushed commit `0df7159` from it. Agent runs in the kb-tools project still execute
+in that container (`devenv-kb-tools`).
 
 ## Acceptance criteria
 
-- [ ] Question answered in a research page or ADR (link it here)
+- [x] Question answered: the run result below, the epic plan's
+      [Verification](../plan.md#verification) section, and the setup in
+      [Agent dev environments](../../../../environments/agent-dev-environments.md).
 
 ## Notes
 
-> TODO: Design notes, constraints, links. Record decisions that outlive this item as ADRs.
+The one follow-up, `tools/kb` not working inside dev containers, was solved by
+[0010-14](14-kb-cli-available-inside-project-dev-containers.md).
 
 ### Run result, 2026-11-05 (Paperclip CEN-6)
 
 The kb-tools Developer agent ran this through Paperclip's SSH environment:
 
 - **Where:** `hostname` `devenv-kb-tools`, user `agent`, run workspace
-  `/home/agent/workspace/.paperclip-runtime/runs/1c1270d1-…/workspace`. The container is
+  `/home/agent/workspace/.paperclip-runtime/runs/<run-id>/workspace`. The container is
   the Dockerfile `dev` stage (PyYAML, python-docx, python-pptx, openpyxl, Pillow, mcp and
   `soffice` present). `pip show kb-tools`: not installed in the image.
 - **Branch:** `git fetch origin` through the Paperclip GitHub broker worked. Checked out
-  `0010-agent-dev-environments` at `1a46eca`.
+  `0010-agent-dev-environments` at `779bc5f`.
 - **Tests:** `python -m pytest -q -p no:cacheprovider` → **18 passed, 0 failed, 0 skipped**
   in 9.88s (wall time 11.0s). LibreOffice tests ran; nothing was skipped.
 - **Workspace import:** a probe test run with the repository's pytest config printed

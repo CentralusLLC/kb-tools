@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import datetime, timezone
 
 from conftest import make_docx, make_pdf, make_png, make_pptx, make_xlsx, needs_soffice
@@ -188,10 +189,33 @@ def test_scaffold_installs_clean_generic_bundle(tmp_path):
     assert header.split(",") == ingest_log.COLUMNS
     errors, warnings = run_checks(Repo(tmp_path))
     assert errors == [] and warnings == [], errors + warnings
-    words = ("gameworld", "centralus", "phaser", "creature")
+    # Template leak guard. The generic scan rules always apply; organisation-specific names
+    # (projects, people, hosts) come only from the deny list outside the repository, so this
+    # test never has to spell them out.
+    from kbtools import scan
+
+    rules = list(scan.BUILTIN_RULES)
+    if os.environ.get(scan.DENYLIST_ENV):
+        extra, problems = scan.load_denylist(Path(os.environ[scan.DENYLIST_ENV]).expanduser())
+        assert problems == [], problems
+        rules += extra
     for name, node in template_files():
-        text = node.read_bytes().decode("utf-8", "ignore").lower()
-        assert not any(w in text for w in words), name
+        text = node.read_bytes().decode("utf-8", "ignore")
+        hits = [rule.name for rule in rules if rule.pattern.search(text)]
+        assert not hits, (name, hits)
+
+
+def test_template_leak_guard_uses_the_deny_list(tmp_path, monkeypatch):
+    from kbtools import scan
+    from kbtools.scaffold import template_files
+
+    name, node = next((n, f) for n, f in template_files() if n.endswith(".md"))
+    word = node.read_bytes().decode("utf-8", "ignore").split()[0]
+    denylist = tmp_path / "deny.txt"
+    denylist.write_text("# test\n" + re.escape(word) + "\n")
+    rules, problems = scan.load_denylist(denylist)
+    assert problems == [] and rules
+    assert any(rule.pattern.search(node.read_bytes().decode("utf-8", "ignore")) for rule in rules), name
 
 
 def test_scaffold_never_overwrites(tmp_path):
@@ -203,6 +227,35 @@ def test_scaffold_never_overwrites(tmp_path):
     assert (tmp_path / "AGENTS.md").read_text() == "mine\n"
     second = scaffold(tmp_path, project="X", actor="t")
     assert second["created"] == []
+
+
+def test_scaffold_routes_sources_and_research_to_the_ingesting_agent(tmp_path):
+    from kbtools.common import Repo
+    from kbtools.scaffold import scaffold
+
+    (tmp_path / ".git").mkdir()
+    page = "docs/process/sources-and-research.md"
+    assert page in scaffold(tmp_path, project="Acme", actor="t")["created"]
+    text = (tmp_path / page).read_text()
+    for heading in ("## Ingestion", "## Source requests", "## Research", "## Where the originals are kept"):
+        assert heading in text, heading
+    agents = (tmp_path / "AGENTS.md").read_text()
+    assert "## Source documents, source requests and research" in agents
+    assert agents.count("docs/process/sources-and-research.md") >= 2  # section and quick reference
+    assert "sources-and-research.md" in (tmp_path / "docs" / "process" / "index.md").read_text()
+    assert "sources-and-research.md" in (tmp_path / "docs" / "process" / "ingestion.md").read_text()
+    for word in ("chief", "cen-", "board"):
+        assert word not in text.lower(), word
+
+    # A project scaffolded before the page existed gets it, and nothing else changes.
+    (tmp_path / page).unlink()
+    (tmp_path / "AGENTS.md").write_text("mine\n")
+    again = scaffold(tmp_path, project="Acme", actor="t")
+    assert again["created"] == [page]
+    assert (tmp_path / "AGENTS.md").read_text() == "mine\n"
+    main(["--repo", str(tmp_path), "catalog", "--write"])
+    errors, _ = run_checks(Repo(tmp_path))
+    assert errors == [], errors
 
 
 def test_work_lifecycle_and_checks(tmp_path):
@@ -342,6 +395,7 @@ def test_mcp_kb_catalog_write_regenerates_catalog(tmp_path, monkeypatch):
     path.write_text(path.read_text().replace("0001 Reporting", "hand-edited row"))
     assert catalog.is_stale(repo)
 
+    server.configure(tmp_path.parent, [])  # the repository is visible under the repos root
     mcp = server.build_server()
 
     def call(**arguments) -> str:

@@ -20,8 +20,11 @@ One-time setup in a dev container (no Docker; see
 [Dev environment](../docs/environments/dev-environment.md#kb-tools-in-the-dev-container)):
 
 ```sh
-KB_TOOLS_SOURCE=git+https://github.com/<owner>/kb-tools tools/kb --install main
+tools/kb --install          # light install; the source is in tools/kb.conf
 ```
+
+The light install has `check`, `work`, `catalog`, `report`, `log` and `inventory`.
+`extract` and `figure` run on the Paperclip machine (or after `tools/kb --install --full`).
 
 Everyday use, from anywhere in this repository:
 
@@ -35,9 +38,18 @@ tools/kb report
 ```
 
 The method these commands support is [docs/process/ingestion.md](../docs/process/ingestion.md).
-Paperclip agents use the same commands as `kb_*` MCP tools.
+Agents on the Paperclip machine (such as the agent that ingests documents) have the same
+commands as `kb_*` MCP tools; those tools only see checkouts on that machine, so agents in
+this project's containers use `tools/kb`.
 
-`tools/kb` is copied from `kb-tools/bin/kb`; update it from there.
+`tools/kb.conf` says where `tools/kb --install` gets kb-tools from (`source=`) and which ref
+(`ref=`). `tools/kb` comes from kb-tools; to upgrade both, install the new version and let it
+replace the wrapper, then commit the change in a pull request:
+
+```sh
+tools/kb --install <ref>
+tools/kb scaffold --tools-only    # replaces tools/kb, adds tools/kb.conf if missing
+```
 
 ## Adding a tool
 

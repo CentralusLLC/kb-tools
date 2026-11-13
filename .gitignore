@@ -4,3 +4,7 @@ __pycache__/
 .venv/
 dist/
 *.egg-info/
+
+# Deployment values (devenv/.env.example is the committed template)
+.env
+!.env.example

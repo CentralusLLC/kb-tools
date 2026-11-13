@@ -25,7 +25,7 @@ generated:
 
 ## Problem / business need
 
-Repeated facts (parties, dates, metrics) across many documents are extracted by hand into data/. The client-project LangExtract tool showed grounded extraction helps, but it is not in kb-tools.
+Repeated facts (parties, dates, metrics) across many documents are extracted by hand into data/. An earlier project's LangExtract tool showed grounded extraction helps, but it is not in kb-tools.
 
 ## Outcome and success measures
 

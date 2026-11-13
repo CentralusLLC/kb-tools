@@ -24,7 +24,7 @@ Each step records its tool, version and confidence in the manifest; OCR text nev
 
 ## Items and sequencing
 
-Independent; start with OCR (0006-01) and duplicate detection (0006-02), which the client-project guide found most valuable.
+Independent; start with OCR (0006-01) and duplicate detection (0006-02), which the earlier extraction guide found most valuable.
 
 ## Risks and open questions
 

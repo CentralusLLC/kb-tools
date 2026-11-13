@@ -11,4 +11,5 @@ How work gets done on {{PROJECT}}, by people and agents.
 - [Release notes](release-notes.md): entries as items complete, cutting releases, recording deployments.
 - [Operations](operations.md): deployments, monitoring, incidents.
 - [Ingestion](ingestion.md): turning source documents into pages, figures and data with kb-tools.
+- [Sources and research](sources-and-research.md): the ingesting agent (for example a Librarian) takes ingestion, source requests and research.
 - [Knowledge base maintenance](knowledge-base.md): changing pages, optional verification, agent memory.

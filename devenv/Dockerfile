@@ -15,4 +15,5 @@ COPY pyproject.toml ./
 COPY kbdevenv ./kbdevenv
 RUN pip install .
 EXPOSE 8780
-ENTRYPOINT ["/usr/bin/tini", "--", "devenv-manager"]
+# Listen on all interfaces inside the container; compose publishes it on DEVENV_HOST_IP only.
+ENTRYPOINT ["/usr/bin/tini", "--", "devenv-manager", "--host", "0.0.0.0"]

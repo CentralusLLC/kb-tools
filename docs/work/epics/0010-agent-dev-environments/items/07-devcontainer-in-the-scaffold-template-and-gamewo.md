@@ -7,7 +7,7 @@ description: "kb scaffold gives every new project a generic .devcontainer/ that 
 tags: [work-item]
 status: draft
 kind: task
-work_status: in_progress
+work_status: todo
 priority: medium
 depends_on: []
 links: 
@@ -37,6 +37,11 @@ environment and the rule to run tests in it.
 - [ ] A test checks that `kb scaffold` installs `.devcontainer/`.
 
 ## Notes
+
+**Remaining (2026-11-12):** the second criterion only. `test_scaffold_installs_clean_generic_bundle`
+checks `.github/` and `tools/kb` but not `.devcontainer/`; add asserts that
+`.devcontainer/Dockerfile` and `.devcontainer/devcontainer.json` are created. The template
+files themselves are on `dev`.
 
 Project-specific dev containers (for example a downstream project's Node or Flutter
 toolchain) belong to that project's own repository and roadmap, not to kb-tools. kb-tools

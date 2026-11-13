@@ -38,7 +38,7 @@ Changing the tool:
 1. Edit `src/kbtools/`, add tests in `tests/`, and update `README.md` when commands change.
 2. Run the tests in Docker ([Testing](testing.md)).
 3. Rebuild the image, `docker build -t kb-tools:latest .`, on each machine that uses it,
-   including the Paperclip host's Paperclip sidecar (`<stack folder>`, then
+   including the kb-tools sidecar next to Paperclip (in its compose folder,
    `docker compose up -d kb-tools`), until images are published ([roadmap](../work/index.md)).
 
 ## Documentation

@@ -2,7 +2,7 @@
 type: Epic
 id: "0006"
 title: "Extraction improvements"
-description: "Close the extraction gaps from the client-project guide: OCR for raster pages, duplicate detection, web capture, Word tracked-change views, and better Excel rendering."
+description: "Close the extraction gaps from the earlier extraction guide: OCR for raster pages, duplicate detection, web capture, Word tracked-change views, and better Excel rendering."
 tags: [epic]
 status: draft
 work_status: proposed

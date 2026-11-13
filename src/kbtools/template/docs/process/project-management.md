@@ -32,7 +32,8 @@ Every agent working on this project:
 - treats this knowledge base as the source of truth, and agent memory as working context
   ([Knowledge base maintenance](knowledge-base.md));
 - proposes knowledge base changes by pull request, and runs `kb check` first;
-- uses kb-tools (`tools/kb` or the `kb_*` MCP tools) for ingestion, not one-off scripts.
+- uses kb-tools for ingestion and checks, not one-off scripts: `tools/kb` in project containers, the
+  `kb_*` MCP tools only for agents on the Paperclip machine.
 
 > TODO: List the agents (or agent platform company), their roles and permissions.
 

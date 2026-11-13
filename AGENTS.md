@@ -45,7 +45,8 @@ When you report back, say which `docs/` pages you relied on.
 - **Weigh pages by trust.** Verification is optional and never blocks work, but its level
   and age tell you how much to rely on a page (`tools/kb report`). Never add `verified`
   entries for your own work, and never add `human:` entries.
-- **Use the tools.** Ingest documents with `tools/kb` (or the `kb_*` MCP tools), not one-off
+- **Use the tools.** Use `tools/kb` in your checkout, or the `kb_*` MCP tools if you work on the
+  Paperclip machine (they only see checkouts under the server's repos root); never one-off
   scripts. Capture key graphics as figures, and follow every diagram with node and edge tables.
 
 ## Quick reference

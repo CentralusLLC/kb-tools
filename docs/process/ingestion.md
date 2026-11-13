@@ -45,13 +45,19 @@ in your agent platform (`paperclip:PRJ-12`).
 
 ## Tools
 
-All steps use **kb-tools**, the shared knowledge-base toolkit. It runs in Docker, with
-LibreOffice and fonts built in, so results are the same on every machine:
+All steps use **kb-tools**, the shared knowledge-base toolkit. Where you run it decides
+which commands you have:
 
-- **In a terminal or IDE:** `tools/kb <command>`. The wrapper is in this repository; the
-  `kb-tools:latest` image must be built once per machine. See [`tools/README.md`](../../tools/README.md).
-- **In Paperclip:** the `kb_*` MCP tools (`kb_inventory`, `kb_extract`, `kb_figure`, `kb_log`,
-  `kb_check`, `kb_report`). Pass `repo` as the absolute path of your checkout.
+- **In a terminal, IDE or dev container:** `tools/kb <command>`. The wrapper is in this
+  repository. With Docker it uses the `kb-tools:latest` image (LibreOffice and fonts built
+  in, so every command works); in a dev container without Docker it uses a light install
+  (`tools/kb --install`) with `check`, `work`, `catalog`, `report`, `log` and `inventory`.
+  See [`tools/README.md`](../../tools/README.md).
+- **On the Paperclip machine:** the `kb_*` MCP tools (`kb_inventory`, `kb_extract`, `kb_figure`,
+  `kb_log`, `kb_check`, `kb_report`), used by the agent that ingests documents (for example a
+  Librarian). Pass `repo` as the repository's name under the server's repos root (`<name>` or
+  `<owner>/<name>`). The server cannot see files inside project containers, so agents there
+  use `tools/kb`, and documents that need `extract` or `figure` go to the ingesting agent.
 
 Do not write one-off extraction scripts. If a tool is missing a capability, improve
 kb-tools.
@@ -158,8 +164,10 @@ log changes. Merging does not wait for page-by-page human review.
 
 ## Agent platform flow (Paperclip)
 
-1. A person attaches a file to a Paperclip issue ("Ingest the product overview deck").
-2. The agent copies it into `docs/sources/` in its checkout and runs `kb_inventory`
+1. A person attaches a file to a Paperclip issue ("Ingest the product overview deck"), assigned
+   to the agent that ingests documents on the Paperclip machine.
+2. The agent copies it into `docs/sources/` in its checkout under the kb-tools server's repos
+   root and runs `kb_inventory`
    with `origin: paperclip:<issue>`.
 3. It runs steps 2 to 7 with the `kb_*` tools. It reviews renders directly from
    `extracted/<slug>/renders/`.

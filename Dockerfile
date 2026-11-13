@@ -4,7 +4,7 @@
 #   docker build --target test -t kb-tools:test .  # runs the test suite during the build
 #
 #   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/work" kb-tools inventory --by human:me
-#   docker run -d -p 8765:8765 -v /data:/data kb-tools serve --allowed-root /data
+#   docker run -d -p 127.0.0.1:8765:8765 -v <checkouts>:/repos kb-tools serve   # MCP; see docs/environments/paperclip-add-on.md
 
 FROM python:3.12-slim-bookworm AS base
 
@@ -28,7 +28,7 @@ RUN apt-get update \
 WORKDIR /opt/kb-tools
 COPY pyproject.toml README.md ./
 COPY src ./src
-RUN pip install ".[server]"
+RUN pip install ".[extract,server]"
 
 FROM base AS test
 RUN pip install ".[dev]"
@@ -41,7 +41,7 @@ RUN python -m pytest -q
 FROM base AS dev
 # Dependencies only: the package itself is removed so tests always import the
 # workspace's src/ (an installed copy would mask the code being changed).
-RUN pip install ".[dev,server]" \
+RUN pip install ".[dev,extract,server]" \
  && pip uninstall -y kb-tools \
  && apt-get update \
  && apt-get install -y --no-install-recommends git make \
@@ -50,8 +50,13 @@ WORKDIR /workspace
 
 FROM base AS runtime
 LABEL org.opencontainers.image.title="kb-tools" \
-      org.opencontainers.image.description="Document ingestion and OKF knowledge-base tools"
+      org.opencontainers.image.description="Document ingestion and OKF knowledge-base tools" \
+      org.opencontainers.image.licenses="MIT"
 WORKDIR /work
+# Inside the container the MCP server must listen on all interfaces to be reachable;
+# the host decides what to publish. KB_REPOS_ROOT is where checkouts are mounted.
+ENV KB_MCP_HOST=0.0.0.0 \
+    KB_REPOS_ROOT=/repos
 EXPOSE 8765
 ENTRYPOINT ["/usr/bin/tini", "--", "kb"]
 CMD ["--help"]
