@@ -5,7 +5,7 @@ title: "Work tracking checks"
 description: "Make kb check and kb work catch work-tracking drift: stale statuses, unchecked criteria, TODO placeholders, broken renames and epics out of step with their items."
 tags: [epic]
 status: draft
-work_status: planned
+work_status: in_progress
 priority: high
 owner: ""
 target: ""

@@ -7,7 +7,7 @@ description: "Warn in kb check and in kb work set when a done item still has unc
 tags: [work-item]
 status: draft
 kind: task
-work_status: todo
+work_status: done
 priority: high
 depends_on: []
 links: 
@@ -30,10 +30,10 @@ done says criteria are met and ticked, but nothing checks it.
 
 ## Acceptance criteria
 
-- [ ] `kb check` warns about a `done` item with `- [ ]` in its Acceptance criteria section.
-- [ ] `kb work set ID done` prints the same warning (the status is still set).
-- [ ] Tests cover both, and pass.
-- [ ] Work-tracking docs mention the check.
+- [x] `kb check` warns about a `done` item with `- [ ]` in its Acceptance criteria section.
+- [x] `kb work set ID done` prints the same warning (the status is still set).
+- [x] Tests cover both, and pass.
+- [x] Work-tracking docs mention the check.
 
 ## Notes
 

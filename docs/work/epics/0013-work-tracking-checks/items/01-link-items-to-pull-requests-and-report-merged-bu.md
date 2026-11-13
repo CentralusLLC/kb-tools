@@ -7,7 +7,7 @@ description: "Record a pull request and tracker links on an item with kb work se
 tags: [work-item]
 status: draft
 kind: task
-work_status: todo
+work_status: done
 priority: high
 depends_on: []
 links: 
@@ -31,14 +31,14 @@ merged, and `kb check` was clean (finding 7). Nothing links an item to its pull 
 
 ## Acceptance criteria
 
-- [ ] `kb work set ID STATUS --pr URL` (or `#N`) records the pull request in `links.github`;
+- [x] `kb work set ID STATUS --pr URL` (or `#N`) records the pull request in `links.github`;
       `--github`, `--jira` and `--paperclip` set those links on items and epics.
-- [ ] The `kb_work_set` MCP tool takes the same links.
-- [ ] `kb check` warns about a `backlog`, `todo` or `in_review` item whose pull request is merged
+- [x] The `kb_work_set` MCP tool takes the same links.
+- [x] `kb check` warns about a `backlog`, `todo` or `in_review` item whose pull request is merged
       in the local git history (squash title `[NNNN-NN] ... (#N)` or a merge commit from
       branch `NNNN-NN-...`); no warning without git.
-- [ ] Tests cover the options and the warning (with a real `git init`), and pass.
-- [ ] Work-tracking docs (kb-tools and template) and the user guide describe both.
+- [x] Tests cover the options and the warning (with a real `git init`), and pass.
+- [x] Work-tracking docs (kb-tools and template) and the user guide describe both.
 
 ## Notes
 

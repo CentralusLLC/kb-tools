@@ -159,6 +159,11 @@ def _run_dir(repo: str, *args: str) -> str:
     return _run(repo, *args)
 
 
+def _options(**values: str) -> list[str]:
+    """CLI options for the non-empty values: _options(pr="41") -> ["--pr", "41"]."""
+    return [part for key, value in values.items() if value for part in (f"--{key}", value)]
+
+
 def build_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT):
     from mcp.server.fastmcp import FastMCP
     from mcp.types import ToolAnnotations
@@ -254,24 +259,32 @@ def build_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT):
         return _run(repo, "work", "list", *(["--status", status] if status else []), *(["--open"] if open_only else []))
 
     @mcp.tool(annotations=write)
-    def kb_work_new_epic(repo: str, title: str, by: str, priority: str = "medium", status: str = "proposed") -> str:
-        """Create docs/work/epics/NNNN-slug/ with epic.md (business need) and plan.md (implementation plan)."""
-        return _run(repo, "work", "new-epic", title, "--by", by, "--priority", priority, "--status", status)
+    def kb_work_new_epic(repo: str, title: str, by: str, priority: str = "medium", status: str = "proposed",
+                         description: str = "", github: str = "", jira: str = "", paperclip: str = "") -> str:
+        """Create docs/work/epics/NNNN-slug/ with epic.md (business need) and plan.md (implementation plan).
+        `description` is one sentence on the business need; github, jira and paperclip set its links."""
+        args = ["work", "new-epic", title, "--by", by, "--priority", priority, "--status", status]
+        return _run(repo, *args, *_options(description=description, github=github, jira=jira, paperclip=paperclip))
 
     @mcp.tool(annotations=write)
     def kb_work_new_item(repo: str, epic: str, title: str, by: str, kind: str = "story", priority: str = "medium",
-                         status: str = "todo", depends_on: list[str] | None = None) -> str:
-        """Create a work item in an epic's items/ folder (ids NNNN-NN). kind: story|task|bug|spike|chore."""
+                         status: str = "todo", depends_on: list[str] | None = None, description: str = "",
+                         github: str = "", jira: str = "", paperclip: str = "") -> str:
+        """Create a work item in an epic's items/ folder (ids NNNN-NN). kind: story|task|bug|spike|chore.
+        `description` is one sentence on what it delivers; github, jira and paperclip set its links."""
         args = ["work", "new-item", epic, title, "--by", by, "--kind", kind, "--priority", priority, "--status", status]
         for dependency in depends_on or []:
             args += ["--depends-on", dependency]
-        return _run(repo, *args)
+        return _run(repo, *args, *_options(description=description, github=github, jira=jira, paperclip=paperclip))
 
     @mcp.tool(annotations=write)
-    def kb_work_set(repo: str, id: str, status: str) -> str:
+    def kb_work_set(repo: str, id: str, status: str, pr: str = "", github: str = "", jira: str = "",
+                    paperclip: str = "") -> str:
         """Set work_status of an epic (proposed|planned|in_progress|done|cancelled) or item
-        (backlog|todo|in_progress|in_review|blocked|done|cancelled); regenerates the roadmap."""
-        return _run(repo, "work", "set", id, status)
+        (backlog|todo|in_progress|in_review|blocked|done|cancelled); regenerates the roadmap.
+        `pr` (URL or number) records the delivering pull request in links.github; github, jira and
+        paperclip set those links."""
+        return _run(repo, "work", "set", id, status, *_options(pr=pr, github=github, jira=jira, paperclip=paperclip))
 
     @mcp.tool(annotations=read)
     def kb_check(repo: str, strict: bool = False) -> str:
