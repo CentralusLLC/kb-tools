@@ -50,7 +50,8 @@ WORKDIR /workspace
 
 FROM base AS runtime
 LABEL org.opencontainers.image.title="kb-tools" \
-      org.opencontainers.image.description="Document ingestion and OKF knowledge-base tools"
+      org.opencontainers.image.description="Document ingestion and OKF knowledge-base tools" \
+      org.opencontainers.image.licenses="MIT"
 WORKDIR /work
 # Inside the container the MCP server must listen on all interfaces to be reachable;
 # the host decides what to publish. KB_REPOS_ROOT is where checkouts are mounted.

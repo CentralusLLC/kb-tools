@@ -174,3 +174,12 @@ docker run --rm -v "$PWD/src:/opt/kb-tools/src:ro" -v "$PWD/tests:/opt/kb-tools/
 Extraction never uses the network, cloud OCR or a language model. LangExtract
 (`pip install .[facts]`) is an optional follow-on for schema-driven fact extraction.
 Point it at a local model unless the material may leave the machine.
+
+## License
+
+kb-tools is released under the [MIT License](LICENSE). Copyright (c) 2026 Centralus LLC.
+
+Its dependencies and the packages in the Docker image (including LibreOffice, MPL-2.0) keep
+their own licences; see [Third-party licences](docs/architecture/third-party-licences.md).
+Projects created with `kb scaffold` don't inherit a licence: choose your own
+([ADR 0006](docs/architecture/decisions/0006-mit-license-template-ships-none.md)).
