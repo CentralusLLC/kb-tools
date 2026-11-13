@@ -29,6 +29,7 @@ who use the product: what changed for them, not how it was built.
 - [0010-11] `kb check` scans tracked files for secrets (errors) and private or tailnet addresses (warnings), with an optional deny list outside the repository (`KB_SCAN_DENYLIST`) for organisation-specific names.
 - [0010-15] `kb scaffold --tools-only` upgrades a project's `tools/kb` to the installed version's and adds a missing `tools/kb.conf`; the add-on guide has an upgrade section.
 - [0010-12] kb-tools is MIT-licensed (`LICENSE`, package metadata and the image's `org.opencontainers.image.licenses` label). Third-party licences are listed in `docs/architecture/third-party-licences.md`; projects created with `kb scaffold` choose their own licence.
+- [0010-16] Every new project's knowledge base routes document ingestion, source requests and research to the ingesting agent (for example a Librarian): `docs/process/sources-and-research.md` and an `AGENTS.md` section in the scaffold template, and add-on guide steps to give that agent a checkout of each project.
 - [0011-01] The `kb_catalog` MCP tool can regenerate `docs/catalog.md` (`write=true`), like `kb catalog --write`.
 
 ## Changed

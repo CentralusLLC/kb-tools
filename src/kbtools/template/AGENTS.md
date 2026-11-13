@@ -39,10 +39,30 @@ When you report back, say which `docs/` pages you relied on.
   Paperclip machine (they only see checkouts under the server's repos root); never one-off
   scripts. Capture key graphics as figures, and follow every diagram with node and edge tables.
 
+## Source documents, source requests and research
+
+One agent owns the project's source documents: the ingesting agent (for example a Librarian),
+which runs the kb-tools MCP tools. Details:
+[`docs/process/sources-and-research.md`](docs/process/sources-and-research.md).
+
+- **Ingestion:** documents to ingest are attached to a task for the ingesting agent. It runs
+  `kb_inventory` → `kb_extract` → pages (`kb_figure` for key graphics) → `kb_log` →
+  `kb_check`, and opens a pull request listing the documents, the pages changed and anything
+  flagged. Sensitive material is approved before merge. Originals and `extracted/` output
+  never go into git.
+- **Source requests:** to see the original behind a knowledge base reference, create a task
+  assigned to the ingesting agent naming the document, the page, slide or sheet, and your
+  question. The answer comes on that task as attachments (page image, crop, extracted text).
+  If the gap matters to others, the ingesting agent also fixes the page in a follow-up pull
+  request; one-off answers stay on the task.
+- **Research:** long-running web and document research is a task for the ingesting agent;
+  findings go into the knowledge base with sources. Quick lookups while coding stay with you.
+
 ## Quick reference
 
 - Work tracking (epics, plans, items; branch and PR naming): [`docs/process/work-tracking.md`](docs/process/work-tracking.md), roadmap in [`docs/work/index.md`](docs/work/index.md)
 - Ingestion: [`docs/process/ingestion.md`](docs/process/ingestion.md)
+- Source requests and research (ask the ingesting agent): [`docs/process/sources-and-research.md`](docs/process/sources-and-research.md)
 - Knowledge base conventions: [`docs/conventions.md`](docs/conventions.md)
 - Domain terms: [`docs/domains/glossary.md`](docs/domains/glossary.md)
 - Dev environment (where tests run; how to get one or install packages): [`docs/environments/dev-environment.md`](docs/environments/dev-environment.md)

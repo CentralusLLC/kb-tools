@@ -229,6 +229,35 @@ def test_scaffold_never_overwrites(tmp_path):
     assert second["created"] == []
 
 
+def test_scaffold_routes_sources_and_research_to_the_ingesting_agent(tmp_path):
+    from kbtools.common import Repo
+    from kbtools.scaffold import scaffold
+
+    (tmp_path / ".git").mkdir()
+    page = "docs/process/sources-and-research.md"
+    assert page in scaffold(tmp_path, project="Acme", actor="t")["created"]
+    text = (tmp_path / page).read_text()
+    for heading in ("## Ingestion", "## Source requests", "## Research", "## Where the originals are kept"):
+        assert heading in text, heading
+    agents = (tmp_path / "AGENTS.md").read_text()
+    assert "## Source documents, source requests and research" in agents
+    assert agents.count("docs/process/sources-and-research.md") >= 2  # section and quick reference
+    assert "sources-and-research.md" in (tmp_path / "docs" / "process" / "index.md").read_text()
+    assert "sources-and-research.md" in (tmp_path / "docs" / "process" / "ingestion.md").read_text()
+    for word in ("chief", "cen-", "board"):
+        assert word not in text.lower(), word
+
+    # A project scaffolded before the page existed gets it, and nothing else changes.
+    (tmp_path / page).unlink()
+    (tmp_path / "AGENTS.md").write_text("mine\n")
+    again = scaffold(tmp_path, project="Acme", actor="t")
+    assert again["created"] == [page]
+    assert (tmp_path / "AGENTS.md").read_text() == "mine\n"
+    main(["--repo", str(tmp_path), "catalog", "--write"])
+    errors, _ = run_checks(Repo(tmp_path))
+    assert errors == [], errors
+
+
 def test_work_lifecycle_and_checks(tmp_path):
     from kbtools import work
     from kbtools.common import Repo

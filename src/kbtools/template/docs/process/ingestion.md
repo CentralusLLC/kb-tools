@@ -24,6 +24,9 @@ Source documents become knowledge in seven steps:
 The central lesson is that **automated conversion produces an extraction, not
 knowledge**. Knowledge needs visual reconciliation and editorial synthesis.
 
+Ingestion is one of three kinds of request the ingesting agent (for example a Librarian)
+takes, with source requests and research; see [Sources and research](sources-and-research.md).
+
 Every source has a row in [`docs/sources/ingest-log.csv`](../sources/ingest-log.csv).
 Human verification is **optional and never blocks** ingestion (see
 [Verification and trust](../conventions.md#verification-and-trust)).
@@ -178,6 +181,8 @@ log changes. Merging does not wait for page-by-page human review.
    example "product overview deck ingested into docs/…".
 
 Paperclip attachments are never cited; pages cite `docs/sources/<file>`.
+Keep the attachments: until the originals have a host backup, they are the backup
+([Where the originals are kept](sources-and-research.md#where-the-originals-are-kept)).
 
 ## Status values
 

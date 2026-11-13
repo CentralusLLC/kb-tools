@@ -1,7 +1,7 @@
 ---
 type: Environment
 title: Install kb-tools as an add-on in a Paperclip environment
-description: "How to add kb-tools to any Paperclip environment: the MCP server on the Paperclip machine for the agent that ingests documents, the light tools/kb install in project containers, the repos root, and how a project starts using it."
+description: "How to add kb-tools to any Paperclip environment: the MCP server on the Paperclip machine for the agent that ingests documents and takes source requests and research, the light tools/kb install in project containers, the repos root, and how a project starts using it."
 tags: [environments, paperclip, mcp, install, add-on]
 status: draft
 generated:
@@ -93,6 +93,16 @@ check out each project repository under the server's repos root, for example
 stay out of git (`docs/sources/` is git-ignored), so only the ingesting agent's checkout
 holds them.
 
+For **every** kb-tools project, the ingesting agent also takes the other two kinds of
+request that need the originals or long reading: **source requests** (a developer asks for
+the page, slide or sheet behind a knowledge base reference, and gets it back as attachments
+on the task) and **research** (long-running web and document research, recorded in the
+knowledge base with sources). The scaffold template describes all three in each project's
+`docs/process/sources-and-research.md` and in a section of its `AGENTS.md`, so developers in
+project containers know to route this work to the ingesting agent. Tell the agent the same
+in its own instructions, and keep the source tasks' attachments: until there is a host backup
+of its `docs/sources/` folders, they are the backup.
+
 ## 3. Start using kb-tools in a project
 
 Once per project, from a kb-tools install (the MCP server's `kb_scaffold`, or `tools/kb` /
@@ -106,6 +116,11 @@ This adds the knowledge base (`docs/`), the agent instructions (`AGENTS.md`, `CL
 `tools/kb` and `tools/kb.conf`, which records where kb-tools is installed from: `source=`,
 and `ref=`, the branch or tag the scaffolding kb-tools was installed from (`main` if
 unknown). Commit them in a pull request.
+
+Then give the ingesting agent ([section 2](#2-set-up-the-ingesting-agent)) a checkout of the
+new project under `KB_REPOS_ROOT`, for example `$KB_REPOS_ROOT/<name>`, and confirm that its
+`kb_work_list` with `repo=<name>` lists the project's work items. Without that checkout the
+agent cannot ingest documents, answer source requests or record research for the project.
 
 ### Upgrading a project set up by an older kb-tools
 
@@ -123,6 +138,14 @@ last install's record, or pip's record of an existing install. If none of those 
 `KB_TOOLS_SOURCE=git+https://github.com/<owner>/kb-tools tools/kb --install <ref>`.
 `--tools-only` changes nothing else, and `tools/kb --install` says when the project's
 `tools/kb` is older than the installed one.
+
+To pick up template pages added since the project was scaffolded, such as
+`docs/process/sources-and-research.md`, run plain `tools/kb scaffold --project <name>`: it
+adds missing files and never overwrites existing ones. Then run `tools/kb catalog --write`,
+and add by hand what lives in files the project already has: the "Source documents, source
+requests and research" section and quick-reference line in `AGENTS.md`, and the links from
+`docs/process/index.md` and `docs/process/ingestion.md`. A project that already has its own
+page for this process can delete the added page instead.
 
 ## 4. Install the light tools in each project container
 
