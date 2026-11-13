@@ -48,6 +48,7 @@ who use the product: what changed for them, not how it was built.
 - [0010-15] `tools/kb --install` finds the source of an install made before `tools/kb.conf` existed, and says when the project's `tools/kb` is older than the installed one.
 - [0010-15] `kb scaffold` records the ref kb-tools was installed from in `tools/kb.conf` (for example `dev`), instead of always `main`.
 - [0010-15] The `kb check` scan skips untracked files in Paperclip's `.paperclip-runtime/` folder (a file committed there is still scanned), so agent workspaces no longer get a warning; the docs now say untracked, not ignored files are scanned.
+- [0010-17] `docker build --target test` runs the whole test suite again: the test stage installs git and copies `bin/`. The runtime image is unchanged.
 
 ## Deprecated
 
