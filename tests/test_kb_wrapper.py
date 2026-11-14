@@ -155,12 +155,29 @@ def test_install_reuses_the_recorded_source(env):
 def test_default_home_is_the_password_database_home_not_HOME(env):
     import pwd
 
+    try:
+        home = pwd.getpwuid(os.getuid()).pw_dir
+    except KeyError:  # uid not in /etc/passwd (docker run -u, CI): the wrapper falls back to $HOME
+        home = str(env["tmp"] / "per-run-home")
     del env["env"]["KB_TOOLS_HOME"]
     env["env"]["HOME"] = str(env["tmp"] / "per-run-home")
     fake_docker(env, has_image=False)
     result = run(env, "check")
     assert result.returncode == 1
-    assert f"{pwd.getpwuid(os.getuid()).pw_dir}/.kb-tools" in result.stderr
+    assert f"{home}/.kb-tools" in result.stderr
+
+
+def test_default_home_falls_back_to_HOME_for_a_uid_without_a_password_entry(env):
+    """docker run -u 1002:1002 (rootless Docker, CI): no passwd entry, so no lookup and no noise."""
+    stub(env["fakes"] / "id", 'case "$1" in -u|-g) echo 1002 ;; *) echo "id: cannot find name for user ID 1002" >&2; exit 1 ;; esac\n')
+    stub(env["fakes"] / "getent", "exit 2\n")
+    del env["env"]["KB_TOOLS_HOME"]
+    env["env"]["HOME"] = str(env["tmp"] / "per-run-home")
+    fake_docker(env, has_image=False)
+    result = run(env, "check")
+    assert result.returncode == 1
+    assert f"{env['tmp']}/per-run-home/.kb-tools" in result.stderr
+    assert "cannot find name" not in result.stderr
 
 
 def fake_existing_install(env: dict, source: str = "", package: Path | None = None) -> None:

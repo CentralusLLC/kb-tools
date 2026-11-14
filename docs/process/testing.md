@@ -13,18 +13,28 @@ generated:
 
 ## Current state
 
-All tests are in `tests/test_kb.py` (pytest), with fixtures in `tests/conftest.py` that build
-real PowerPoint, Excel, Word and PDF files. They run inside the image, so LibreOffice rendering
+Tests are in `tests/` (pytest), with fixtures in `tests/conftest.py` that build real
+PowerPoint, Excel, Word and PDF files. They run inside the image, so LibreOffice rendering
 is exercised:
 
 ```sh
 docker build --target test -t kb-tools:test .     # runs the suite during the build
-# faster loop against the source tree:
-docker build --target base -t kb-tools:base .
-docker run --rm -v "$PWD/src:/opt/kb-tools/src:ro" -v "$PWD/tests:/opt/kb-tools/tests:ro" \
-  -v "$PWD/bin:/opt/kb-tools/bin:ro" -e PYTHONPATH=/opt/kb-tools/src -w /opt/kb-tools kb-tools:base \
-  sh -c 'pip install -q pytest python-docx "mcp<2" && python -m pytest -q'
+# faster loop against the source tree (the dev stage has git and the test dependencies):
+docker build --target dev -t kb-tools:dev .
+docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/workspace" kb-tools:dev python -m pytest -q
 ```
+
+`-u` makes files the tests write in the bind-mounted tree belong to you rather than to
+root. Your uid usually has no entry in the image's `/etc/passwd`; the suite and the
+`tools/kb` wrapper handle that (the wrapper falls back to `$HOME`), and `-e HOME=/tmp`
+gives that user a writable home. On rootless Docker, drop `-u`: root in the container is
+already your host user, while `-u` maps to a subordinate uid on the host, so anything the
+run writes into the tree would not be yours.
+
+The `test` stage must be able to run the full suite. It adds git (tests create repositories)
+and copies `bin/` (the `tools/kb` wrapper the tests run and compare with the scaffold
+template's copy); git stays out of `base`, so the runtime image doesn't grow. A test that
+needs another tool or file from the repository root needs a matching line in that stage.
 
 A scaffold test checks that a freshly scaffolded repository passes `kb check` with no
 errors or warnings, and that the template carries no project-specific words.

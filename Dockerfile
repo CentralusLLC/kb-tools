@@ -30,8 +30,15 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 RUN pip install ".[extract,server]"
 
+# The test stage must be able to run the full suite: git (tests init repositories) stays
+# here, not in base, so the runtime image doesn't grow; bin/ holds the tools/kb wrapper
+# the tests exercise and compare with the scaffold template's copy.
 FROM base AS test
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git \
+ && rm -rf /var/lib/apt/lists/*
 RUN pip install ".[dev]"
+COPY bin ./bin
 COPY tests ./tests
 RUN python -m pytest -q
 
