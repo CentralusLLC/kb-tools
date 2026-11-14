@@ -21,8 +21,15 @@ is exercised:
 docker build --target test -t kb-tools:test .     # runs the suite during the build
 # faster loop against the source tree (the dev stage has git and the test dependencies):
 docker build --target dev -t kb-tools:dev .
-docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/workspace" kb-tools:dev python -m pytest -q
+docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/workspace" kb-tools:dev python -m pytest -q
 ```
+
+`-u` makes files the tests write in the bind-mounted tree belong to you rather than to
+root. Your uid usually has no entry in the image's `/etc/passwd`; the suite and the
+`tools/kb` wrapper handle that (the wrapper falls back to `$HOME`), and `-e HOME=/tmp`
+gives that user a writable home. On rootless Docker, drop `-u`: root in the container is
+already your host user, while `-u` maps to a subordinate uid on the host, so anything the
+run writes into the tree would not be yours.
 
 The `test` stage must be able to run the full suite. It adds git (tests create repositories)
 and copies `bin/` (the `tools/kb` wrapper the tests run and compare with the scaffold

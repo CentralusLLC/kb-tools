@@ -44,6 +44,9 @@ The runtime image was not affected: it ships the wrapper as
 - [x] git is installed only in the `test` stage; `base` and `runtime` are unchanged
 - [x] The tests need no git identity in a clean container (`HOME=/tmp`, no gitconfig)
 - [x] `docs/process/testing.md` says what the test stage must provide
+- [x] The suite passes for a uid with no `/etc/passwd` entry (`docker run -u`, CI), and the
+      `tools/kb` wrapper falls back to `$HOME` there without printing errors
+- [x] `docs/process/testing.md` says when to use `-u` and why to drop it on rootless Docker
 
 ## Notes
 
@@ -54,3 +57,10 @@ The runtime image was not affected: it ships the wrapper as
   and `env -i`. Without git on `PATH` and without `bin/`: 3 failed, 64 passed, 1 skipped,
   15 errors (the same as the failed build). With both: 83 passed.
 - No test commits, so no git identity is needed.
+- Review follow-up (CEN-54): with `docker run -u "$(id -u):$(id -g)" -e HOME=/tmp` the
+  suite had 1 failure, a `KeyError` from `pwd.getpwuid` in
+  `test_default_home_is_the_password_database_home_not_HOME`. Only the test crashed. The
+  wrapper already fell back to `$HOME`, but it looked the user up by name (`id -un`), which
+  printed `cannot find name for user ID` on stderr. It now looks up the uid
+  (`getent passwd "$(id -u)"`). The test expects `$HOME` when the uid has no entry, and a
+  new test stubs `id` and `getent` to cover the fallback.

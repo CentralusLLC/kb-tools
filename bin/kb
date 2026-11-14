@@ -16,7 +16,8 @@
 #
 # KB_TOOLS_IMAGE overrides the image (default: kb-tools:latest).
 # KB_TOOLS_HOME is the local install (default: .kb-tools in the user's home from the
-#   password database, which persists in agent dev containers even when $HOME is per-run).
+#   password database, which persists in agent dev containers even when $HOME is per-run;
+#   $HOME when the uid has no entry there, as with `docker run -u` or in CI).
 # KB_TOOLS_SOURCE is the pip source to install from. Without it, --install reads `source=`
 #   from tools/kb.conf in the repository (written by `kb scaffold`), then from the last
 #   install's $KB_TOOLS_HOME/install.conf, then from pip's record of an existing install
@@ -28,7 +29,7 @@
 set -eu
 IMAGE="${KB_TOOLS_IMAGE:-kb-tools:latest}"
 if [ -z "${KB_TOOLS_HOME:-}" ]; then
-  USER_HOME="$(getent passwd "$(id -un)" 2>/dev/null | cut -d: -f6)" || USER_HOME=""
+  USER_HOME="$(getent passwd "$(id -u)" 2>/dev/null | cut -d: -f6)" || USER_HOME=""
   KB_TOOLS_HOME="${USER_HOME:-$HOME}/.kb-tools"
 fi
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
