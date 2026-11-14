@@ -8,16 +8,19 @@ docs/work/
     plan.md                     type: Implementation Plan
     items/NN-slug.md            type: Work Item        (id "NNNN-NN")
 
-Work state lives in `work_status` (OKF's `status` keeps meaning page maturity).
+Work state lives in `work_status`. OKF's `status` keeps meaning page maturity: `kb work set`
+keeps it `draft` while the work is open and `stable` once it is done or cancelled.
 """
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import unquote
 
 from . import okf
 from .common import Repo, atomic_write, now_iso, slugify
@@ -44,6 +47,8 @@ STARTED_EPIC = {"in_progress", "done"}
 UNCHECKED = re.compile(r"(?m)^\s*[-*] \[ \]")
 PLACEHOLDER = re.compile(r"^\s*(?:>\s*TODO\b|[-*] \[[ xX]\] TODO\b)")
 PR_NUMBER = re.compile(r"(?:^#?|/pull/)(\d+)/?$")
+SLUG_LIMIT = 48
+OKF_DRAFT, OKF_STABLE = "draft", "stable"
 
 
 @dataclass
@@ -171,6 +176,13 @@ def validate(repo: Repo) -> tuple[list[str], list[str]]:
                                     "if more pull requests follow")
             if item_status in {"in_progress", "in_review", "done"} and status in {"proposed"}:
                 warnings.append(f"{item_where}: item is {item_status} but its epic is still proposed")
+        if status in {"planned", "in_progress"} and epic.items and not open_items:
+            warnings.append(f"{where}: epic is {status} but all its items are done or cancelled; set it done "
+                            f"(`kb work set {epic.id} done`) or add the items still to do")
+        if missing := _missing_numbers(epic):
+            ids_missing = ", ".join(f"{epic.number}-{n}" for n in missing)
+            warnings.append(f"{where}: item id{'s' if len(missing) > 1 else ''} {ids_missing} missing; ids are "
+                            "never reused, so restore a deleted item with work_status: cancelled")
         if status in CLOSED and open_items:
             warnings.append(f"{where}: epic is {status} but items are still open: {', '.join(open_items)}")
         if status == "done" and _retro_missing(epic.path):
@@ -184,6 +196,12 @@ def validate(repo: Repo) -> tuple[list[str], list[str]]:
     if epics and index.is_file() and index.read_text(encoding="utf-8") != _with_index(index.read_text(encoding="utf-8"), epics, repo):
         warnings.append("docs/work/index.md roadmap is out of date (run `kb work index`)")
     return errors, warnings
+
+
+def _missing_numbers(epic: Epic) -> list[str]:
+    """Item numbers skipped in an epic (01..highest), for example ["02"] when 01 and 03 exist."""
+    numbers = {int(item.number) for item in epic.items}
+    return [f"{n:02d}" for n in range(1, max(numbers, default=0)) if n not in numbers]
 
 
 @dataclass
@@ -368,6 +386,21 @@ def _quote(text: str) -> str:
     return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def file_slug(title: str, slug: str = "") -> str:
+    """The slug part of a new epic folder or item file: `slug` as given, or the title cut at the
+    last word boundary within SLUG_LIMIT characters (a single longer word is cut at the limit)."""
+    if slug:
+        cleaned = slugify(slug)
+        if cleaned != slug:
+            raise SystemExit(f"kb: --slug must be lowercase letters, digits and hyphens, for example {cleaned!r}")
+        return cleaned
+    text = slugify(title)
+    if len(text) <= SLUG_LIMIT:
+        return text
+    cut = text[:SLUG_LIMIT + 1].rsplit("-", 1)[0]
+    return cut if "-" in text[:SLUG_LIMIT + 1] and cut else text[:SLUG_LIMIT].strip("-")
+
+
 def _check_links(links: dict[str, str] | None) -> dict[str, str]:
     links = {key: value for key, value in (links or {}).items() if value}
     if set(links) - set(TRACKERS):
@@ -380,14 +413,15 @@ def _links_block(links: dict[str, str]) -> str:
 
 
 def new_epic(repo: Repo, title: str, *, by: str, priority: str = "medium", status: str = "proposed",
-             description: str = "", links: dict[str, str] | None = None) -> Path:
+             description: str = "", links: dict[str, str] | None = None, slug: str = "") -> Path:
     if status not in EPIC_STATUSES:
         raise SystemExit(f"kb: status must be one of {', '.join(EPIC_STATUSES)}")
     links = _check_links(links)
+    name = file_slug(title, slug)
     problem = description or "> TODO: Who has the problem, what it costs them, and why now."
     epics, _ = load(repo)
     number = f"{max((int(e.number) for e in epics), default=0) + 1:04d}"
-    folder = work_dir(repo) / "epics" / f"{number}-{slugify(title)[:48].strip('-')}"
+    folder = work_dir(repo) / "epics" / f"{number}-{name}"
     folder.mkdir(parents=True)
     stamp = [("generated", f"\n  by: {by}\n  at: {now_iso()}")]
     epic = _front([
@@ -467,8 +501,9 @@ Items live in [items/](items/), one file each. Create them with
 
 def new_item(repo: Repo, epic_id: str, title: str, *, by: str, priority: str = "medium",
              status: str = "todo", depends_on: list[str] | None = None, kind: str = "story",
-             description: str = "", links: dict[str, str] | None = None) -> Path:
+             description: str = "", links: dict[str, str] | None = None, slug: str = "") -> Path:
     links = _check_links(links)
+    name = file_slug(title, slug)
     if kind not in ITEM_KINDS:
         raise SystemExit(f"kb: kind must be one of {', '.join(ITEM_KINDS)}")
     if status not in ITEM_STATUSES:
@@ -479,7 +514,7 @@ def new_item(repo: Repo, epic_id: str, title: str, *, by: str, priority: str = "
         raise SystemExit(f"kb: epic {epic_id} not found under docs/work/epics/")
     number = f"{max((int(i.number) for i in epic.items), default=0) + 1:02d}"
     ident = f"{epic.number}-{number}"
-    path = epic.path.parent / "items" / f"{number}-{slugify(title)[:48].strip('-')}.md"
+    path = epic.path.parent / "items" / f"{number}-{name}.md"
     depends = "[" + ", ".join(f'"{d}"' for d in depends_on or []) + "]"
     text = _front([
         ("type", "Work Item"), ("id", f'"{ident}"'), ("epic", f'"{epic.number}"'), ("title", _quote(title)),
@@ -581,9 +616,125 @@ def set_status(repo: Repo, ident: str, status: str, links: dict[str, str] | None
                 updated, count = re.subn(r"(?m)^work_status:.*$", f"work_status: {status}", text, count=1)
                 if not count:
                     raise SystemExit(f"kb: {repo.rel(path)} has no work_status line")
+                updated = _page_status(updated, OKF_STABLE if status in CLOSED else OKF_DRAFT)
                 if links:
                     updated = set_links(updated, links)
                 atomic_write(path, updated)
                 _refresh(repo)
                 return path
     raise SystemExit(f"kb: no epic or item with id {ident}")
+
+
+def _page_status(text: str, wanted: str) -> str:
+    """Set OKF `status` to draft or stable; other values (deprecated) are left as they are.
+
+    A work page changes while the work is open (draft) and stops changing once it is done or
+    cancelled (stable). `work_status` carries the work state itself.
+    """
+    front = okf.FRONT_MATTER.match(text)
+    match = re.search(r"(?m)^status:[ \t]*(\S*)[ \t]*$", front.group(0)) if front else None
+    if match is None or match.group(1).strip("\"'") not in {OKF_DRAFT, OKF_STABLE}:
+        return text
+    return text[:match.start()] + f"status: {wanted}" + text[match.end():]
+
+
+# ---------------------------------------------------------------- renaming
+
+LINK_TARGET = re.compile(r"(\]\()(<?)([^)\s>]+)(>?(?:\s+\"[^\"]*\")?\))")
+REFERENCE_TARGET = re.compile(r"(?m)^(\s{0,3}\[[^\]]+\]:\s*)(\S+)")
+
+
+def rename(repo: Repo, ident: str, slug: str = "", title: str = "") -> Path:
+    """Rename an epic folder or item file (the id stays), optionally retitle it, rewrite relative
+    Markdown links to it under docs/, and regenerate the roadmap and catalog."""
+    if not slug and not title:
+        raise SystemExit("kb: give --slug, --title or both")
+    epics, _ = load(repo)
+    for epic in epics:
+        if epic.id == ident:
+            old = epic.path.parent
+            new = old.with_name(f"{epic.number}-{file_slug(title, slug)}")
+            pages = [epic.path, old / "plan.md"]
+            break
+        item = next((i for i in epic.items if i.id == ident), None)
+        if item is not None:
+            old = item.path
+            new = old.with_name(f"{item.number}-{file_slug(title, slug)}.md")
+            pages = [item.path]
+            break
+    else:
+        raise SystemExit(f"kb: no epic or item with id {ident}")
+    if new != old and new.exists():
+        raise SystemExit(f"kb: {repo.rel(new)} already exists")
+    if title:
+        for page in pages:
+            if page.is_file():
+                atomic_write(page, _retitle(page.read_text(encoding="utf-8"), ident, title))
+    if new != old:
+        for page in sorted(repo.docs.rglob("*.md")):
+            text = page.read_text(encoding="utf-8")
+            updated = _relink(text, page, old, new)
+            if updated != text:
+                atomic_write(page, updated)
+        old.rename(new)
+    _refresh(repo)
+    return new
+
+
+def _retitle(text: str, ident: str, title: str) -> str:
+    """New title in the front matter and the page's first heading (epic, plan or item)."""
+    match = okf.FRONT_MATTER.match(text)
+    if not match:
+        raise SystemExit("kb: page has no front matter")
+    front, body = text[:match.end()], text[match.end():]
+    data, _, _ = okf.parse_front_matter(text)
+    plan = str((data or {}).get("type", "")) == "Implementation Plan"
+    front = re.sub(r"(?m)^title:.*$", lambda _: f"title: {_quote(f'Plan: {title}' if plan else title)}", front, count=1)
+    if plan:
+        heading = f"# Plan: {title}"
+    elif "-" in ident:
+        heading = f"# {ident}: {title}"
+    else:
+        heading = f"# Epic {ident}: {title}"
+    body = re.sub(r"(?m)^# .*$", lambda _: heading, body, count=1)
+    return front + body
+
+
+def _relink(text: str, page: Path, old: Path, new: Path) -> str:
+    """Point relative links in `page` that resolve to `old` (or into it, for a folder) at `new`.
+
+    Paths are worked out from where the page will be after the rename, so pages inside a
+    renamed epic folder keep working too.
+    """
+    page_after = new / page.relative_to(old) if page.is_relative_to(old) else page
+
+    def moved(target: str) -> str | None:
+        if re.match(r"^[a-z][a-z0-9+.-]*:", target) or target.startswith(("#", "/")):
+            return None
+        path, _, anchor = target.partition("#")
+        if not path:
+            return None
+        resolved = Path(os.path.normpath(page.parent / unquote(path)))
+        if resolved != old and not resolved.is_relative_to(old):
+            return None
+        rel = Path(os.path.relpath(new / resolved.relative_to(old), page_after.parent)).as_posix()
+        if path.endswith("/") and not rel.endswith("/"):
+            rel += "/"
+        return rel + (f"#{anchor}" if anchor else "")
+
+    def inline(match: re.Match) -> str:
+        target = moved(match.group(3))
+        return match.group(0) if target is None else match.group(1) + match.group(2) + target + match.group(4)
+
+    def reference(match: re.Match) -> str:
+        target = moved(match.group(2))
+        return match.group(0) if target is None else match.group(1) + target
+
+    lines, in_fence = [], False
+    for line in text.split("\n"):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+        elif not in_fence:
+            line = REFERENCE_TARGET.sub(reference, LINK_TARGET.sub(inline, line))
+        lines.append(line)
+    return "\n".join(lines)

@@ -74,6 +74,7 @@ def test_set_records_pull_request_and_tracker_links(tmp_path, capsys):
 
     with pytest.raises(SystemExit, match="pull request URL or number"):
         main(["--repo", str(tmp_path), "work", "set", "0001-01", "done", "--pr", "soon"])
+    work.new_item(repo, "0001", "Welcome email", by="t", description="Sends one.")  # keeps the planned epic open (0013-07 warns otherwise)
     errors, warnings = run_checks(repo)
     assert errors == [] and warnings == [], errors + warnings
 
@@ -279,3 +280,162 @@ def test_mcp_new_item_takes_description_and_links(tmp_path, monkeypatch):
     item = repo.docs / "work" / "epics" / "0001-onboarding" / "items" / "01-signup-form.md"
     data, _, _ = okf.parse_front_matter(item.read_text())
     assert data["description"] == "A form." and data["links"]["paperclip"] == "PRJ-2"
+
+
+def _mcp(tmp_path: Path, monkeypatch, tool: str, arguments: dict) -> str:
+    from kbtools import server
+
+    src = str(Path(server.__file__).resolve().parents[1])
+    monkeypatch.setenv("PYTHONPATH", src + (":" + os.environ["PYTHONPATH"] if os.environ.get("PYTHONPATH") else ""))
+    server.configure(tmp_path.parent, [])
+    result = asyncio.run(server.build_server().call_tool(tool, {"repo": str(tmp_path), **arguments}))
+    content = result[0] if isinstance(result, tuple) else result
+    return "".join(getattr(block, "text", "") for block in content)
+
+
+# ------------------------------------------------------------------ 0013-04
+
+
+def test_generated_names_are_cut_at_a_word_boundary():
+    title = "Validate kb-tools as an add-on development process"
+    assert work.file_slug(title) == "validate-kb-tools-as-an-add-on-development"
+    assert len(work.file_slug("Audit for Centralus secrets and internal references")) <= work.SLUG_LIMIT
+    assert work.file_slug("Audit for Centralus secrets and internal references") == "audit-for-centralus-secrets-and-internal"
+    assert work.file_slug("Short title") == "short-title"
+    assert work.file_slug("x" * 60) == "x" * work.SLUG_LIMIT  # one long word is cut at the limit
+    assert work.file_slug("Anything", "my-own-name") == "my-own-name"
+    with pytest.raises(SystemExit, match="--slug must be"):
+        work.file_slug("Anything", "Not A Slug")
+
+
+def test_new_item_and_epic_take_slug(tmp_path, monkeypatch):
+    repo = _project(tmp_path)
+    folder = work.new_epic(repo, "Self-serve onboarding for every new customer", by="t", slug="onboarding")
+    assert folder.name == "0001-onboarding"
+    item = work.new_item(repo, "0001", "Validate kb-tools as an add-on development process", by="t")
+    assert item.name == "01-validate-kb-tools-as-an-add-on-development.md"
+    assert main(["--repo", str(tmp_path), "work", "new-item", "0001", "Signup form", "--by", "t", "--slug", "signup"]) == 0
+    assert (folder / "items" / "02-signup.md").is_file()
+    assert _mcp(tmp_path, monkeypatch, "kb_work_new_item",
+                {"epic": "0001", "title": "Welcome email", "by": "t", "slug": "welcome"}).startswith("exit 0")
+    assert (folder / "items" / "03-welcome.md").is_file()
+
+
+# ------------------------------------------------------------------ 0013-05
+
+
+def test_rename_item_updates_links_roadmap_and_catalog(tmp_path, capsys):
+    repo = _project(tmp_path)
+    epic = work.new_epic(repo, "Onboarding", by="t", description="Sign up alone.")
+    item = work.new_item(repo, "0001", "Signup form for new custo", by="t", description="A form.")
+    plan = epic / "plan.md"
+    plan.write_text(plan.read_text() + "\nFirst [the form](items/01-signup-form-for-new-custo.md#acceptance-criteria).\n")
+    page = repo.docs / "process" / "notes.md"
+    page.write_text("---\ntype: Note\ntitle: Notes\ndescription: \"Notes.\"\n---\n\n"
+                    "See [0001-01](../work/epics/0001-onboarding/items/01-signup-form-for-new-custo.md).\n\n"
+                    "[ref]: ../work/epics/0001-onboarding/items/01-signup-form-for-new-custo.md\n\n"
+                    "```\n[code](../work/epics/0001-onboarding/items/01-signup-form-for-new-custo.md)\n```\n")
+    from kbtools.catalog import refresh_if_present
+    refresh_if_present(repo)
+
+    assert main(["--repo", str(tmp_path), "work", "rename", "0001-01", "--slug", "signup-form",
+                 "--title", "Signup form for new customers"]) == 0
+    new = epic / "items" / "01-signup-form.md"
+    assert new.is_file() and not item.exists()
+    data, body, _ = okf.parse_front_matter(new.read_text())
+    assert data["id"] == "0001-01" and data["title"] == "Signup form for new customers"
+    assert "# 0001-01: Signup form for new customers" in body
+    assert "(items/01-signup-form.md#acceptance-criteria)" in plan.read_text()
+    notes = page.read_text()
+    assert "(../work/epics/0001-onboarding/items/01-signup-form.md)" in notes
+    assert "[ref]: ../work/epics/0001-onboarding/items/01-signup-form.md" in notes
+    assert "[code](../work/epics/0001-onboarding/items/01-signup-form-for-new-custo.md)" in notes  # code untouched
+    errors, warnings = run_checks(repo)
+    assert errors == [] and warnings == [], errors + warnings
+
+
+def test_rename_epic_moves_the_folder_and_retitles_the_plan(tmp_path, monkeypatch):
+    repo = _project(tmp_path)
+    work.new_epic(repo, "Onboarding", by="t", description="Sign up alone.")
+    item = work.new_item(repo, "0001", "Signup form", by="t", description="A form.")
+    item.write_text(item.read_text() + "\nPlan: [plan](../plan.md), roadmap: [index](../../../index.md).\n")
+    from kbtools.catalog import refresh_if_present
+    refresh_if_present(repo)
+
+    out = _mcp(tmp_path, monkeypatch, "kb_work_rename", {"id": "0001", "title": "Self-serve onboarding"})
+    assert out.startswith("exit 0"), out
+    folder = repo.docs / "work" / "epics" / "0001-self-serve-onboarding"
+    assert (folder / "items" / "01-signup-form.md").is_file()
+    assert not (repo.docs / "work" / "epics" / "0001-onboarding").exists()
+    assert "# Plan: Self-serve onboarding" in (folder / "plan.md").read_text()
+    assert "# Epic 0001: Self-serve onboarding" in (folder / "epic.md").read_text()
+    assert "epics/0001-self-serve-onboarding/epic.md" in (repo.docs / "work" / "index.md").read_text()
+    errors, warnings = run_checks(repo)
+    assert errors == [] and warnings == [], errors + warnings
+
+    with pytest.raises(SystemExit, match="give --slug, --title or both"):
+        work.rename(repo, "0001")
+    with pytest.raises(SystemExit, match="no epic or item"):
+        work.rename(repo, "0009-01", slug="x")
+
+
+# ------------------------------------------------------------------ 0013-06
+
+
+def test_set_marks_closed_work_stable_and_reopened_work_draft(tmp_path):
+    repo = _project(tmp_path)
+    epic = work.new_epic(repo, "Onboarding", by="t") / "epic.md"
+    item = _item(repo, "0001", "Signup form")
+    status = lambda path: okf.parse_front_matter(path.read_text())[0]["status"]  # noqa: E731
+    assert status(item) == "draft"
+    work.set_status(repo, "0001-01", "in_progress")
+    assert status(item) == "draft"
+    work.set_status(repo, "0001-01", "done")
+    assert status(item) == "stable"
+    work.set_status(repo, "0001-01", "in_progress")  # reopened
+    assert status(item) == "draft"
+    work.set_status(repo, "0001-01", "cancelled")
+    assert status(item) == "stable"
+    work.set_status(repo, "0001", "done")
+    assert status(epic) == "stable"
+    item.write_text(item.read_text().replace("status: stable", "status: deprecated"))
+    work.set_status(repo, "0001-01", "todo")
+    assert status(item) == "deprecated"  # only draft and stable are managed
+    assert "work_status: todo" in item.read_text()
+
+
+# ------------------------------------------------------------------ 0013-07
+
+
+def test_open_epic_with_all_items_closed_is_reported(tmp_path):
+    repo = _project(tmp_path)
+    work.new_epic(repo, "Onboarding", by="t", status="in_progress")
+    epic = repo.docs / "work" / "epics" / "0001-onboarding" / "epic.md"
+    _fill_in(epic)
+    _fill_in(epic.parent / "plan.md")
+    _item(repo, "0001", "Signup form")
+    _item(repo, "0001", "Welcome email")
+    work.set_status(repo, "0001-01", "done")
+    _, warnings = run_checks(repo)
+    assert not [w for w in warnings if "all its items" in w]
+    work.set_status(repo, "0001-02", "cancelled")
+    _, warnings = run_checks(repo)
+    assert [w for w in warnings if "epic is in_progress but all its items are done or cancelled" in w], warnings
+    work.new_epic(repo, "Empty", by="t", status="planned")  # no items yet: nothing to report
+    _, warnings = run_checks(repo)
+    assert not [w for w in warnings if "0002" in w and "all its items" in w]
+
+
+def test_skipped_item_ids_are_reported(tmp_path):
+    repo = _project(tmp_path)
+    work.new_epic(repo, "Onboarding", by="t")
+    for title in ("One", "Two", "Three", "Four"):
+        work.new_item(repo, "0001", title, by="t")
+    items = repo.docs / "work" / "epics" / "0001-onboarding" / "items"
+    (items / "02-two.md").unlink()
+    (items / "03-three.md").unlink()
+    _, warnings = run_checks(repo)
+    assert [w for w in warnings if "item ids 0001-02, 0001-03 missing" in w], warnings
+    (items / "04-four.md").unlink()  # the highest number gone leaves no visible gap
+    _, warnings = run_checks(repo)
+    assert not [w for w in warnings if "missing" in w], warnings

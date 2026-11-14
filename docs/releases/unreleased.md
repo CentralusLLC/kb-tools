@@ -33,6 +33,10 @@ who use the product: what changed for them, not how it was built.
 - [0013-01] `kb work set ID STATUS --pr URL` records the pull request that delivers an item, and `--github`, `--jira` and `--paperclip` record tracker links (also on the `kb_work_set` MCP tool). `kb check` warns about `backlog`, `todo` or `in_review` items whose pull request is merged, read from the local git history.
 - [0013-02] `kb check` and `kb work set ... done` warn about done items whose acceptance criteria aren't all ticked.
 - [0013-03] `kb work new-item` and `new-epic` (and their MCP tools) take `--description` and tracker links, so new pages need no hand edits; `kb check` warns about TODO placeholders left on work that has started.
+- [0013-04] `kb work new-epic` and `new-item` (and their MCP tools) take `--slug`; without it, folder and file names are cut at a word boundary instead of mid-word.
+- [0013-05] `kb work rename ID --slug SLUG [--title TITLE]` (and the `kb_work_rename` MCP tool) renames an epic folder or item file, keeps its id, rewrites links to it and regenerates the roadmap and catalog.
+- [0013-06] `kb work set` keeps OKF `status` in step with the work: `stable` once an item or epic is done or cancelled, `draft` again if it reopens. The work-tracking page explains both status fields.
+- [0013-07] `kb check` warns about `planned` or `in_progress` epics whose items are all done or cancelled, and about skipped item ids in an epic.
 - [0011-01] The `kb_catalog` MCP tool can regenerate `docs/catalog.md` (`write=true`), like `kb catalog --write`.
 
 ## Changed

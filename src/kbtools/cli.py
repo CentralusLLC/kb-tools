@@ -168,12 +168,12 @@ def cmd_work(args) -> int:
     repo = _repo(args)
     if args.work_command == "new-epic":
         folder = work.new_epic(repo, args.title, by=args.by, priority=args.priority, status=args.status,
-                               description=args.description or "", links=_links(args))
+                               description=args.description or "", links=_links(args), slug=args.slug or "")
         print(f"created {repo.rel(folder)}/epic.md and plan.md")
     elif args.work_command == "new-item":
         path = work.new_item(repo, args.epic, args.title, by=args.by, priority=args.priority,
                              status=args.status, depends_on=args.depends_on or [], kind=args.kind,
-                             description=args.description or "", links=_links(args))
+                             description=args.description or "", links=_links(args), slug=args.slug or "")
         print(f"created {repo.rel(path)}")
     elif args.work_command == "set":
         links = _links(args)
@@ -183,6 +183,9 @@ def cmd_work(args) -> int:
         print(f"updated {repo.rel(path)}")
         for warning in work.status_warnings(path, args.status):
             print(f"warning {repo.rel(path)}: {warning}", file=sys.stderr)
+    elif args.work_command == "rename":
+        path = work.rename(repo, args.id, slug=args.slug or "", title=args.title or "")
+        print(f"renamed {args.id} to {repo.rel(path)}")
     elif args.work_command == "index":
         print(f"updated {repo.rel(work.write_index(repo))}")
     elif args.work_command == "list":
@@ -316,6 +319,7 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_argument("--priority", default="medium", choices=["critical", "high", "medium", "low"])
     w.add_argument("--status", default="proposed", help="proposed|planned|in_progress|done|cancelled")
     w.add_argument("--description", help="one sentence on the business need (also starts the Problem section)")
+    w.add_argument("--slug", help="folder name after NNNN- (default: the title, cut at a word boundary)")
     _link_options(w)
     w = work_sub.add_parser("new-item", help="create items/NN-slug.md in an epic")
     w.add_argument("epic", help="epic number, e.g. 0007")
@@ -326,12 +330,17 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_argument("--depends-on", action="append", help="item id this depends on (repeatable)")
     w.add_argument("--kind", default="story", choices=["story", "task", "bug", "spike", "chore"])
     w.add_argument("--description", help="one sentence on what the item delivers (also starts What and why)")
+    w.add_argument("--slug", help="file name after NN- (default: the title, cut at a word boundary)")
     _link_options(w)
-    w = work_sub.add_parser("set", help="set work_status of an epic or item")
+    w = work_sub.add_parser("set", help="set work_status of an epic or item (and OKF status: stable when closed)")
     w.add_argument("id", help="epic id (0007) or item id (0007-02)")
     w.add_argument("status")
     w.add_argument("--pr", help="pull request that delivers it (URL or number); recorded in links.github")
     _link_options(w)
+    w = work_sub.add_parser("rename", help="rename an epic folder or item file (and retitle it), updating links to it")
+    w.add_argument("id", help="epic id (0007) or item id (0007-02); the id never changes")
+    w.add_argument("--slug", help="new name after NNNN- or NN- (default: from --title)")
+    w.add_argument("--title", help="new title for the page (and the plan, for an epic)")
     work_sub.add_parser("index", help="regenerate the roadmap in docs/work/index.md")
     w = work_sub.add_parser("list", help="list epics and items")
     w.add_argument("--status")

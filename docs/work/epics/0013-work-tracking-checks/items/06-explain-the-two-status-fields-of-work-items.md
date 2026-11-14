@@ -5,13 +5,13 @@ epic: "0013"
 title: "Explain the two status fields of work items"
 description: "Explain what OKF status means on work pages, and have kb work set mark closed items and epics stable."
 tags: [work-item]
-status: draft
+status: stable
 kind: task
-work_status: todo
+work_status: done
 priority: high
 depends_on: []
 links: 
-  github: ""
+  github: "#5"
   jira: ""
   paperclip: "CEN-50"
 generated: 
@@ -30,7 +30,7 @@ Every item has OKF `status: draft` next to `work_status: done`, and nothing says
 
 ## Acceptance criteria
 
-- [ ] The work-tracking page (kb-tools and template) explains both fields and when `status` changes.
-- [ ] `kb work set ID done` or `cancelled` sets `status: stable`, since the page no longer changes;
+- [x] The work-tracking page (kb-tools and template) explains both fields and when `status` changes.
+- [x] `kb work set ID done` or `cancelled` sets `status: stable`, since the page no longer changes;
       reopening sets it back to `draft`.
-- [ ] Tests cover it, and pass.
+- [x] Tests cover it, and pass.

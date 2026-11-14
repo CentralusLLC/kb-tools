@@ -5,13 +5,13 @@ epic: "0013"
 title: "Rename an item or epic safely"
 description: "Add kb work rename, which renames an item or epic file and updates links to it, the roadmap and the catalog."
 tags: [work-item]
-status: draft
+status: stable
 kind: story
-work_status: todo
+work_status: done
 priority: high
 depends_on: []
 links: 
-  github: ""
+  github: "#5"
   jira: ""
   paperclip: "CEN-50"
 generated: 
@@ -31,12 +31,12 @@ as safe.
 
 ## Acceptance criteria
 
-- [ ] `kb work rename ID --slug SLUG [--title TITLE]` renames an item file or epic folder,
+- [x] `kb work rename ID --slug SLUG [--title TITLE]` renames an item file or epic folder,
       keeps the id, updates the title if given, rewrites relative Markdown links to it in
       `docs/`, and regenerates the roadmap and catalog.
-- [ ] A `kb_work_rename` MCP tool does the same.
-- [ ] `kb check` is clean after a rename; tests cover items and epics, and pass.
-- [ ] Work-tracking docs describe it.
+- [x] A `kb_work_rename` MCP tool does the same.
+- [x] `kb check` is clean after a rename; tests cover items and epics, and pass.
+- [x] Work-tracking docs describe it.
 
 ## Notes
 
