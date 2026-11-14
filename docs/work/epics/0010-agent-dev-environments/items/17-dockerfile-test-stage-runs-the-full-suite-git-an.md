@@ -5,13 +5,13 @@ epic: "0010"
 title: "Dockerfile test stage runs the full suite (git and bin/)"
 description: "The Dockerfile test stage installs git and copies bin/, so docker build --target test runs the whole suite green; the runtime image is unchanged."
 tags: [work-item]
-status: draft
+status: stable
 kind: bug
-work_status: in_review
+work_status: done
 priority: high
 depends_on: []
 links: 
-  github: "https://github.com/CentralusLLC/kb-tools/pull/4"
+  github: "#4"
   jira: ""
   paperclip: "CEN-54"
 generated: 

@@ -88,11 +88,25 @@ Two steps, both for board review through Chief:
    - The deny-list audit over all refs of a fresh clone is 0. Author and committer e-mails are only
      the GitHub no-reply addresses.
    - This pull request updates the commit ids cited in the docs.
+4. **Sidecar rebuilt (2026-11-13, deploy approved by the board on CEN-12).** The Paperclip host's
+   kb-tools sidecar was rebuilt from the rewritten `main` 59a7906 (the release merge of PR #2), so
+   it no longer runs a pre-rewrite build. Recorded in the
+   [v0.1.0 Deployments table](../../../../releases/v0.1.0.md#deployments).
+   - Image `sha256:ec1e69377e4c74a18c66ca8883535b95a71fb910c98831fcaf8a4cce00107903` replaces
+     `sha256:a98e04feb2937533624e6ac34413bb6d894e0ee97ae09340431d840160f1ee94` (the fbd2c21 build).
+   - The full suite passed in the `dev` image (83 passed). The `test` stage was skipped because it
+     could not run the newer tests; [0010-17](17-dockerfile-test-stage-runs-the-full-suite-git-an.md) fixed it.
+   - The container is healthy with 0 restarts, and its settings (`KB_REPOS_ROOT`, `KB_ALLOWED_ROOTS`,
+     `KB_MCP_HOST`) are unchanged.
+   - MCP check: 13 tools. `kb_catalog` and `kb_report` work for `repo=gameworld` and by full path;
+     `/etc` is refused; an unknown repository name gives the `KB_REPOS_ROOT` error. From Paperclip,
+     `kb_check repo=gameworld` returns 0 errors (3 private-address warnings from the new scan).
+   - The pre-rebuild rollback image is removed now that the build is confirmed.
 
-Still open before this item is done:
+Still open before this item is done (the last acceptance criterion):
 - GitHub Support has to remove the cached `refs/pull/*` of PRs #1–#14, which still point at the
   old commits. This must happen before the repository is made public.
-- Every older clone is re-cloned or hard-reset: the Paperclip host's sidecar (rebuild from the new
-  `main`, which also refreshes the v0.1.0 provenance), agent workspaces, the `devenv-kb-tools`
-  container, and gameworld's `tools/kb` install (`tools/kb --install` again).
+- Every older clone is re-cloned or hard-reset. The Paperclip host's sidecar is done (step 4);
+  still to confirm: agent workspaces, the `devenv-kb-tools` container, and gameworld's `tools/kb`
+  install (`tools/kb --install` again).
 
