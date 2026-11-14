@@ -167,19 +167,37 @@ def cmd_work(args) -> int:
 
     repo = _repo(args)
     if args.work_command == "new-epic":
-        folder = work.new_epic(repo, args.title, by=args.by, priority=args.priority, status=args.status)
+        folder = work.new_epic(repo, args.title, by=args.by, priority=args.priority, status=args.status,
+                               description=args.description or "", links=_links(args))
         print(f"created {repo.rel(folder)}/epic.md and plan.md")
     elif args.work_command == "new-item":
         path = work.new_item(repo, args.epic, args.title, by=args.by, priority=args.priority,
-                             status=args.status, depends_on=args.depends_on or [], kind=args.kind)
+                             status=args.status, depends_on=args.depends_on or [], kind=args.kind,
+                             description=args.description or "", links=_links(args))
         print(f"created {repo.rel(path)}")
     elif args.work_command == "set":
-        print(f"updated {repo.rel(work.set_status(repo, args.id, args.status))}")
+        links = _links(args)
+        if args.pr:
+            links["github"] = work.pr_link(args.pr)
+        path = work.set_status(repo, args.id, args.status, links=links)
+        print(f"updated {repo.rel(path)}")
+        for warning in work.status_warnings(path, args.status):
+            print(f"warning {repo.rel(path)}: {warning}", file=sys.stderr)
     elif args.work_command == "index":
         print(f"updated {repo.rel(work.write_index(repo))}")
     elif args.work_command == "list":
         print(work.listing(repo, status=args.status, open_only=args.open), end="")
     return 0
+
+
+def _links(args) -> dict[str, str]:
+    return {key: getattr(args, key) for key in ("github", "jira", "paperclip") if getattr(args, key)}
+
+
+def _link_options(parser) -> None:
+    parser.add_argument("--github", help="GitHub issue or pull request, e.g. '#41' (links.github)")
+    parser.add_argument("--jira", help="Jira key, e.g. PRJ-118 (links.jira)")
+    parser.add_argument("--paperclip", help="Paperclip issue, e.g. PRJ-23 (links.paperclip)")
 
 
 def cmd_catalog(args) -> int:
@@ -297,6 +315,8 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_argument("--by", required=True, help="human:<name> or <tool>/<version>")
     w.add_argument("--priority", default="medium", choices=["critical", "high", "medium", "low"])
     w.add_argument("--status", default="proposed", help="proposed|planned|in_progress|done|cancelled")
+    w.add_argument("--description", help="one sentence on the business need (also starts the Problem section)")
+    _link_options(w)
     w = work_sub.add_parser("new-item", help="create items/NN-slug.md in an epic")
     w.add_argument("epic", help="epic number, e.g. 0007")
     w.add_argument("title")
@@ -305,9 +325,13 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_argument("--status", default="todo", help="backlog|todo|in_progress|in_review|blocked|done|cancelled")
     w.add_argument("--depends-on", action="append", help="item id this depends on (repeatable)")
     w.add_argument("--kind", default="story", choices=["story", "task", "bug", "spike", "chore"])
+    w.add_argument("--description", help="one sentence on what the item delivers (also starts What and why)")
+    _link_options(w)
     w = work_sub.add_parser("set", help="set work_status of an epic or item")
     w.add_argument("id", help="epic id (0007) or item id (0007-02)")
     w.add_argument("status")
+    w.add_argument("--pr", help="pull request that delivers it (URL or number); recorded in links.github")
+    _link_options(w)
     work_sub.add_parser("index", help="regenerate the roadmap in docs/work/index.md")
     w = work_sub.add_parser("list", help="list epics and items")
     w.add_argument("--status")

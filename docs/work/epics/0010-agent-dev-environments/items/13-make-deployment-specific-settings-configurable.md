@@ -7,11 +7,11 @@ description: "Keep the devenv manager and the Paperclip host deployment, but sup
 tags: [work-item]
 status: draft
 kind: story
-work_status: in_review
+work_status: blocked
 priority: critical
 depends_on: []
 links: 
-  github: ""
+  github: "https://github.com/CentralusLLC/kb-tools-private/pull/8"
   jira: ""
   paperclip: "CEN-34"
 generated: 
@@ -100,3 +100,5 @@ the MCP server, light `tools/kb` in project containers):
   Paperclip task document, not the repository.
 - Changing published ports or bind addresses on the Paperclip host affects live Paperclip connections
   (the devenv manager and kb-tools MCP URLs); verify both after redeploying.
+- Blocked (2026-11-13, 0013-01): PR #8 (`kb-tools-private`) is merged into `dev`; the last criterion, verifying the
+  Paperclip host deployment, waits for the board, which has deferred deploys (CEN-12).

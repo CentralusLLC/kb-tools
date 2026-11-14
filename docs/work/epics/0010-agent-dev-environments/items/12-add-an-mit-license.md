@@ -7,11 +7,11 @@ description: "License kb-tools under MIT: a root LICENSE, pyproject metadata, a 
 tags: [work-item]
 status: draft
 kind: chore
-work_status: in_review
+work_status: done
 priority: critical
 depends_on: []
 links: 
-  github: ""
+  github: "https://github.com/CentralusLLC/kb-tools-private/pull/10"
   jira: ""
   paperclip: "CEN-34"
 generated: 

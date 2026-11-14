@@ -30,6 +30,9 @@ who use the product: what changed for them, not how it was built.
 - [0010-15] `kb scaffold --tools-only` upgrades a project's `tools/kb` to the installed version's and adds a missing `tools/kb.conf`; the add-on guide has an upgrade section.
 - [0010-12] kb-tools is MIT-licensed (`LICENSE`, package metadata and the image's `org.opencontainers.image.licenses` label). Third-party licences are listed in `docs/architecture/third-party-licences.md`; projects created with `kb scaffold` choose their own licence.
 - [0010-16] Every new project's knowledge base routes document ingestion, source requests and research to the ingesting agent (for example a Librarian): `docs/process/sources-and-research.md` and an `AGENTS.md` section in the scaffold template, and add-on guide steps to give that agent a checkout of each project.
+- [0013-01] `kb work set ID STATUS --pr URL` records the pull request that delivers an item, and `--github`, `--jira` and `--paperclip` record tracker links (also on the `kb_work_set` MCP tool). `kb check` warns about `backlog`, `todo` or `in_review` items whose pull request is merged, read from the local git history.
+- [0013-02] `kb check` and `kb work set ... done` warn about done items whose acceptance criteria aren't all ticked.
+- [0013-03] `kb work new-item` and `new-epic` (and their MCP tools) take `--description` and tracker links, so new pages need no hand edits; `kb check` warns about TODO placeholders left on work that has started.
 - [0011-01] The `kb_catalog` MCP tool can regenerate `docs/catalog.md` (`write=true`), like `kb catalog --write`.
 
 ## Changed

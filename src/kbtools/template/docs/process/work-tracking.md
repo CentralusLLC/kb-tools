@@ -104,16 +104,41 @@ Every item has a `kind`:
 Use `tools/kb work` (on the Paperclip machine, the `kb_work_*` MCP tools) rather than creating files by hand:
 
 ```sh
-tools/kb work new-epic "Self-serve onboarding" --by <you> --priority high
-tools/kb work new-item 0007 "Email verification" --by <you> --kind story --depends-on 0007-01
+tools/kb work new-epic "Self-serve onboarding" --by <you> --priority high \
+  --description "New customers can't sign up without our help." --paperclip PRJ-20
+tools/kb work new-item 0007 "Email verification" --by <you> --kind story --depends-on 0007-01 \
+  --description "Users confirm their email address before their first login." --github "#41"
 tools/kb work set 0007-02 in_progress
+tools/kb work set 0007-02 done --pr https://github.com/<owner>/<repo>/pull/57
 tools/kb work list --open
 tools/kb work index          # regenerate the roadmap (new-epic, new-item and set do it too)
 ```
 
+- `--description` fills in the page's description and its first section (Problem, or What and why).
+- `--github`, `--jira` and `--paperclip` record the external copies in `links`, on `new-epic`,
+  `new-item` and `set`. `set --pr` records the pull request that delivers an item in `links.github`.
+- `set ... done` warns when acceptance criteria are still unticked; the status is set anyway.
+
 `tools/kb check` validates the work tree: IDs match folders and files, statuses are valid,
 dependencies exist, closed epics have no open items, planned epics have a plan, and the
-roadmap is current.
+roadmap is current. It also warns about drift:
+
+| Warning | Fix |
+| --- | --- |
+| A `done` item has unticked (`- [ ]`) acceptance criteria | Tick them, or say in the item why one no longer applies |
+| Started work (items `in_progress`, `in_review` or `done`; epics `in_progress` or `done`) still has `TODO` placeholders in its description or sections | Fill them in, or delete sections that don't apply. An epic's Retrospective may stay a placeholder until the epic closes |
+| A `backlog`, `todo` or `in_review` item's pull request is merged | Set the item `done`, or `in_progress` if more pull requests follow |
+
+Merged pull requests are read from the local git history: GitHub's squash-merge titles
+(`[0007-02] Title (#57)`, which may list several items) and merge commits from a
+`0007-02-...` branch, plus the pull request in an item's `links.github`. Without git (for
+example in the kb-tools Docker image) that check is skipped.
+
+A linked pull request counts as merged only if a merge commit with its number names that item
+or its epic, or names no work id at all. Pull request numbers restart when a project moves to a
+new repository, so an old `[0003-01] … (#8)` in the history doesn't make a new `#8` look merged.
+Link to a pull request in another repository by its full URL; those links are not looked up in
+the local history.
 
 ## Lifecycle
 
