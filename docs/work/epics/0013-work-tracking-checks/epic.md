@@ -4,8 +4,8 @@ id: "0013"
 title: "Work tracking checks"
 description: "Make kb check and kb work catch work-tracking drift: stale statuses, unchecked criteria, TODO placeholders, broken renames and epics out of step with their items."
 tags: [epic]
-status: draft
-work_status: in_progress
+status: stable
+work_status: done
 priority: high
 owner: ""
 target: ""
@@ -83,15 +83,16 @@ pull requests and a clean `kb check` on kb-tools. gameworld's re-check of its fi
 
 Checked on 2026-11-14: all eight items are merged into `dev`: 0013-01..03 in PR #1, 0013-04..07
 in PR #5 (both merged by Chief), and 0013-08 in the pull request that closes this epic. Each of
-findings 7–13 has a test in `tests/test_work_tracking.py`. `kb check` on kb-tools and on a fresh
-scaffold reports 0 errors and 0 warnings, and no TODO placeholders are left in kb-tools'
-started work pages. gameworld's re-check waits for the next kb-tools release, which also
+findings 7–13 has a test in `tests/test_work_tracking.py`. `kb check` reports 0 errors and
+0 warnings on a fresh scaffold, and 0 errors on kb-tools. Its one warning there is the new
+merged-pull-request check doing its job: it flags 0010-17 (PR #4 merged, item still `in_review`),
+which that item's own task closes. No TODO placeholders are left in kb-tools' started work pages. gameworld's re-check waits for the next kb-tools release, which also
 needs the deferred MCP server redeploy.
 
 ## Retrospective
 
 - Worked: the new checks found the same drift in kb-tools itself (0010-12 and 0010-13) as soon as
-  they ran, and filling in epic 0010's placeholders proved the TODO check on real pages.
+  they ran, and filling in epic 0010's placeholders proved the placeholder check on real pages.
   Grouping the items into three pull requests kept the branches from conflicting.
 - Didn't: moving to the new public repository restarted pull request numbers, so links like `#8`
   became ambiguous, and the merged-pull-request check had to learn to ignore old squash titles

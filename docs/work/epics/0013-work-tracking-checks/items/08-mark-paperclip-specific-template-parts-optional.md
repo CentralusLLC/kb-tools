@@ -5,13 +5,13 @@ epic: "0013"
 title: "Mark Paperclip-specific template parts optional"
 description: "Say in the scaffold templates which Paperclip-specific parts are optional when a project uses another agent platform."
 tags: [work-item]
-status: draft
+status: stable
 kind: chore
-work_status: todo
+work_status: done
 priority: high
 depends_on: []
 links: 
-  github: ""
+  github: "#6"
   jira: ""
   paperclip: "CEN-50"
 generated: 
