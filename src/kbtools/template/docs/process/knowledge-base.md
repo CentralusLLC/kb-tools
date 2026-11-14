@@ -23,6 +23,10 @@ generated:
 
 See [Agent workflow](agent-workflow.md#precedence) for the full precedence order.
 
+Agent memory is optional. Hindsight is the memory Paperclip agents use; on another platform,
+use its memory or none ([Agent platforms](agent-workflow.md#agent-platforms)). Nothing in the
+knowledge base depends on it.
+
 ## Making a change
 
 1. Find the page that already covers the topic. Prefer editing it to creating a new one.

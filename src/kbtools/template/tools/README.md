@@ -24,7 +24,8 @@ tools/kb --install          # light install; the source is in tools/kb.conf
 ```
 
 The light install has `check`, `work`, `catalog`, `report`, `log` and `inventory`.
-`extract` and `figure` run on the Paperclip machine (or after `tools/kb --install --full`).
+`extract` and `figure` run on the Paperclip machine, or anywhere after `tools/kb --install --full`
+(Paperclip is optional; see [agent platforms](../docs/process/agent-workflow.md#agent-platforms)).
 
 Everyday use, from anywhere in this repository:
 

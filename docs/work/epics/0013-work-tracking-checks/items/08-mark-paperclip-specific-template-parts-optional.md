@@ -5,13 +5,13 @@ epic: "0013"
 title: "Mark Paperclip-specific template parts optional"
 description: "Say in the scaffold templates which Paperclip-specific parts are optional when a project uses another agent platform."
 tags: [work-item]
-status: draft
+status: stable
 kind: chore
-work_status: todo
+work_status: done
 priority: high
 depends_on: []
 links: 
-  github: ""
+  github: "#6"
   jira: ""
   paperclip: "CEN-50"
 generated: 
@@ -30,8 +30,8 @@ an add-on to Paperclip environments, but a project on another platform can't tel
 
 ## Acceptance criteria
 
-- [ ] The template's dev-environment page marks its "Agents" section and the `devenv_*` tools as
+- [x] The template's dev-environment page marks its "Agents" section and the `devenv_*` tools as
       Paperclip-specific and optional.
-- [ ] Template pages that mention Hindsight memory say it is optional.
-- [ ] The `trackers.yaml` template marks the Paperclip section optional.
-- [ ] A fresh `kb scaffold` passes `kb check`.
+- [x] Template pages that mention Hindsight memory say it is optional.
+- [x] The `trackers.yaml` template marks the Paperclip section optional.
+- [x] A fresh `kb scaffold` passes `kb check`.

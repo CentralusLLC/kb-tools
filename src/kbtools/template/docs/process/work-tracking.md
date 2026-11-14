@@ -187,8 +187,8 @@ Each field has **one owner**, so systems never fight over it:
   adds or updates an item file.
 - **Pull requests close tracker issues** through their own keywords (`Closes #41`, Jira smart
   commits), so the merge is the single moment work becomes done.
-- Paperclip issues reference the item or plan file with a `workspace_file` link, so reviewers
-  read the plan in place.
+- Paperclip issues (if you use Paperclip) reference the item or plan file with a `workspace_file`
+  link, so reviewers read the plan in place.
 
 Trackers in use are configured in [`docs/work/trackers.yaml`](../work/trackers.yaml).
 

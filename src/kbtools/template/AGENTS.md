@@ -36,7 +36,8 @@ When you report back, say which `docs/` pages you relied on.
   and age tell you how much to rely on a page (`tools/kb report`). Never add `verified`
   entries for your own work, and never add `human:` entries.
 - **Use the tools.** Use `tools/kb` in your checkout, or the `kb_*` MCP tools if you work on the
-  Paperclip machine (they only see checkouts under the server's repos root); never one-off
+  Paperclip machine (they only see checkouts under the server's repos root; Paperclip is optional,
+  see [`docs/process/agent-workflow.md#agent-platforms`](docs/process/agent-workflow.md#agent-platforms)); never one-off
   scripts. Capture key graphics as figures, and follow every diagram with node and edge tables.
 
 ## Source documents, source requests and research

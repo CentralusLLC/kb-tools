@@ -19,6 +19,8 @@ jira:
     "In Review": in_review
     "Done": done
 
+# Optional: only for projects whose agents run on Paperclip. On another agent platform,
+# leave it empty or delete it (docs/process/agent-workflow.md#agent-platforms).
 paperclip:
   url: ""                  # https://<host>
   company: ""              # company prefix, e.g. PRJ
