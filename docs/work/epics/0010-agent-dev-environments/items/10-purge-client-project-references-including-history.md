@@ -5,9 +5,9 @@ epic: "0010"
 title: "Purge client-project references from the repository, including history"
 description: "Remove every reference to an earlier client project from the working tree and from git history with one filter-repo rewrite, approved by the owner before the force-push."
 tags: [work-item]
-status: draft
+status: stable
 kind: chore
-work_status: in_progress
+work_status: done
 priority: critical
 depends_on: ["0010-11", "0010-13"]
 links: 
@@ -53,9 +53,10 @@ Known tree hits (2026-11-06):
 - [x] The template-leak guard still works without naming internal projects in the repository
       (for example an untracked or environment-supplied denylist).
 - [x] The owner explicitly approves the force-push before it happens.
-- [ ] Open PRs, other clones (the Paperclip host's sidecar, agent workspaces, dev containers) and the v0.1.0
+- [x] Open PRs, other clones (the Paperclip host's sidecar, agent workspaces, dev containers) and the v0.1.0
       provenance (commit 449e64f, now b22e03b) are listed, and each is handled (rebased, re-cloned or
-      re-tagged).
+      re-tagged). The sidecar was rebuilt (step 4); the rest was superseded by the switch to a fresh
+      public repository (step 5).
 
 ## Notes
 
@@ -103,10 +104,12 @@ Two steps, both for board review through Chief:
      `kb_check repo=gameworld` returns 0 errors (3 private-address warnings from the new scan).
    - The pre-rebuild rollback image is removed now that the build is confirmed.
 
-Still open before this item is done (the last acceptance criterion):
-- GitHub Support has to remove the cached `refs/pull/*` of PRs #1–#14, which still point at the
-  old commits. This must happen before the repository is made public.
-- Every older clone is re-cloned or hard-reset. The Paperclip host's sidecar is done (step 4);
-  still to confirm: agent workspaces, the `devenv-kb-tools` container, and gameworld's `tools/kb`
-  install (`tools/kb --install` again).
+5. **Superseded by a fresh public repository (2026-11-13, CEN-34 option B).** Instead of making
+   the rewritten repository public, kb-tools was published as a new repository whose history never
+   had the cached pull-request refs, and the old repository was kept private. Two steps that were
+   still open here no longer apply:
+   - asking GitHub Support to remove the cached `refs/pull/*` of the old pull requests;
+   - confirming that every older clone (agent workspaces, the `devenv-kb-tools` container,
+     gameworld's `tools/kb` install) is re-cloned or hard-reset.
 
+   Done 2026-11-14 (CEN-61), after the board's public-readiness check (CEN-12).
