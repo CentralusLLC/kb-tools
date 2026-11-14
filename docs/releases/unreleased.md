@@ -60,3 +60,5 @@ who use the product: what changed for them, not how it was built.
 ## Removed
 
 ## Security
+
+- [0010-10] kb-tools is published as a fresh public repository whose code and history contain no references to the earlier client project it was ported from.
