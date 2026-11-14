@@ -21,6 +21,12 @@ there, so nobody depends on an outside service to test.
 
 ## Agents (agent platforms such as Paperclip)
 
+> **Paperclip-specific and optional.** This section describes agent dev containers on
+> Paperclip: the devenv manager, its `devenv_*` MCP tools and the Paperclip environment
+> settings. On another agent platform, or with no platform, skip it and run agents in
+> `.devcontainer/` however your platform supports it; the rest of this page still applies
+> ([Agent platforms](../process/agent-workflow.md#agent-platforms)).
+
 - Each project has one agent dev container, built from `.devcontainer/` by the **devenv manager**
   (`devenv_*` MCP tools), with sshd, node and the claude CLI added on top. The agent platform runs
   the agent inside it through an SSH execution environment.
@@ -52,7 +58,7 @@ tools/kb check
 - It is a **light** install (a few MB): `check`, `work`, `catalog`, `report`, `log` and
   `inventory`. Document extraction and figures (`extract`, `figure`) run on the Paperclip
   machine through the kb-tools MCP server, done by the agent that ingests documents; they
-  explain this if you call them here. `tools/kb --install --full` adds them (about 330 MB, and
+  explain this if you call them here. Without Paperclip, `tools/kb --install --full` adds them (about 330 MB, and
   LibreOffice for some formats, which this image doesn't have unless the project adds it).
 - `tools/kb.conf` names the source and ref. Pass a tag or branch (`tools/kb --install v0.2.0`)
   to pin another version; run the same command again to update (it replaces the install).

@@ -33,7 +33,8 @@ Every agent working on this project:
   ([Knowledge base maintenance](knowledge-base.md));
 - proposes knowledge base changes by pull request, and runs `kb check` first;
 - uses kb-tools for ingestion and checks, not one-off scripts: `tools/kb` in project containers, the
-  `kb_*` MCP tools only for agents on the Paperclip machine.
+  `kb_*` MCP tools only for agents on the Paperclip machine (optional,
+  [Agent platforms](agent-workflow.md#agent-platforms)).
 
 > TODO: List the agents (or agent platform company), their roles and permissions.
 

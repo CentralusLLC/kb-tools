@@ -37,6 +37,7 @@ who use the product: what changed for them, not how it was built.
 - [0013-05] `kb work rename ID --slug SLUG [--title TITLE]` (and the `kb_work_rename` MCP tool) renames an epic folder or item file, keeps its id, rewrites links to it and regenerates the roadmap and catalog.
 - [0013-06] `kb work set` keeps OKF `status` in step with the work: `stable` once an item or epic is done or cancelled, `draft` again if it reopens. The work-tracking page explains both status fields.
 - [0013-07] `kb check` warns about `planned` or `in_progress` epics whose items are all done or cancelled, and about skipped item ids in an epic.
+- [0013-08] New projects' templates say which parts are Paperclip-specific and optional on another agent platform: an "Agent platforms" section in `docs/process/agent-workflow.md`, and notes on the dev-environment "Agents" section (`devenv_*` tools), Hindsight memory, the Paperclip ingestion flow and the `paperclip` section of `trackers.yaml`.
 - [0011-01] The `kb_catalog` MCP tool can regenerate `docs/catalog.md` (`write=true`), like `kb catalog --write`.
 
 ## Changed

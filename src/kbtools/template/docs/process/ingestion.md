@@ -56,7 +56,7 @@ which commands you have:
   in, so every command works); in a dev container without Docker it uses a light install
   (`tools/kb --install`) with `check`, `work`, `catalog`, `report`, `log` and `inventory`.
   See [`tools/README.md`](../../tools/README.md).
-- **On the Paperclip machine:** the `kb_*` MCP tools (`kb_inventory`, `kb_extract`, `kb_figure`,
+- **On the Paperclip machine** (optional, [agent platforms](agent-workflow.md#agent-platforms)): the `kb_*` MCP tools (`kb_inventory`, `kb_extract`, `kb_figure`,
   `kb_log`, `kb_check`, `kb_report`), used by the agent that ingests documents (for example a
   Librarian). Pass `repo` as the repository's name under the server's repos root (`<name>` or
   `<owner>/<name>`). The server cannot see files inside project containers, so agents there
@@ -166,6 +166,10 @@ tools/kb check
 log changes. Merging does not wait for page-by-page human review.
 
 ## Agent platform flow (Paperclip)
+
+> **Paperclip-specific and optional.** Without Paperclip, use the flow above with `tools/kb`
+> (a Docker or full install for `extract` and `figure`), and skip the memory step if your
+> platform has no memory ([Agent platforms](agent-workflow.md#agent-platforms)).
 
 1. A person attaches a file to a Paperclip issue ("Ingest the product overview deck"), assigned
    to the agent that ingests documents on the Paperclip machine.

@@ -81,10 +81,25 @@ takes one command, with no hand edits. Measured by:
 Chief accepts for the board (Paperclip CEN-50, approved in CEN-12), by reviewing the merged
 pull requests and a clean `kb check` on kb-tools. gameworld's re-check of its findings confirms it.
 
+Checked on 2026-11-14: all eight items are merged into `dev`: 0013-01..03 in PR #1, 0013-04..07
+in PR #5 (both merged by Chief), and 0013-08 in the pull request that closes this epic. Each of
+findings 7–13 has a test in `tests/test_work_tracking.py`. `kb check` on kb-tools and on a fresh
+scaffold reports 0 errors and 0 warnings, and no TODO placeholders are left in kb-tools'
+started work pages. gameworld's re-check waits for the next kb-tools release, which also
+needs the deferred MCP server redeploy.
+
 ## Retrospective
 
-> TODO (fill in when the epic closes): what worked, what didn't, and actions. Each action
-> becomes a work item, a change to a process page, or an ADR.
+- Worked: the new checks found the same drift in kb-tools itself (0010-12 and 0010-13) as soon as
+  they ran, and filling in epic 0010's placeholders proved the TODO check on real pages.
+  Grouping the items into three pull requests kept the branches from conflicting.
+- Didn't: moving to the new public repository restarted pull request numbers, so links like `#8`
+  became ambiguous, and the merged-pull-request check had to learn to ignore old squash titles
+  (0013-01's follow-up). A squash title with no work id can still collide.
+- Actions: the tracker-based report in [0001-04](../0001-tracker-sync/items/04-drift-report-from-trackers.md)
+  replaces the git-history guess once trackers sync; CI should run `kb check` on pull requests
+  ([0004-02](../0004-continuous-integration-for-project-repositories/items/02-definition-of-done-checks-for-pull-requests.md)).
+  No new items.
 
 ## Related
 

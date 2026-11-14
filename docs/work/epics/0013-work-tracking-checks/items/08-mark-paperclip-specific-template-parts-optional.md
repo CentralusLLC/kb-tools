@@ -30,8 +30,8 @@ an add-on to Paperclip environments, but a project on another platform can't tel
 
 ## Acceptance criteria
 
-- [ ] The template's dev-environment page marks its "Agents" section and the `devenv_*` tools as
+- [x] The template's dev-environment page marks its "Agents" section and the `devenv_*` tools as
       Paperclip-specific and optional.
-- [ ] Template pages that mention Hindsight memory say it is optional.
-- [ ] The `trackers.yaml` template marks the Paperclip section optional.
-- [ ] A fresh `kb scaffold` passes `kb check`.
+- [x] Template pages that mention Hindsight memory say it is optional.
+- [x] The `trackers.yaml` template marks the Paperclip section optional.
+- [x] A fresh `kb scaffold` passes `kb check`.
