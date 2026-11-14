@@ -5,13 +5,13 @@ epic: "0013"
 title: "Report epics out of step with their items"
 description: "Warn in kb check about open epics whose items are all closed, and about skipped item ids."
 tags: [work-item]
-status: draft
+status: stable
 kind: task
-work_status: todo
+work_status: done
 priority: high
 depends_on: []
 links: 
-  github: ""
+  github: "#5"
   jira: ""
   paperclip: "CEN-50"
 generated: 

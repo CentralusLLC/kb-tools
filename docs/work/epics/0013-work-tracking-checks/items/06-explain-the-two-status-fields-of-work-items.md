@@ -5,13 +5,13 @@ epic: "0013"
 title: "Explain the two status fields of work items"
 description: "Explain what OKF status means on work pages, and have kb work set mark closed items and epics stable."
 tags: [work-item]
-status: draft
+status: stable
 kind: task
-work_status: todo
+work_status: done
 priority: high
 depends_on: []
 links: 
-  github: ""
+  github: "#5"
   jira: ""
   paperclip: "CEN-50"
 generated: 

@@ -5,13 +5,13 @@ epic: "0013"
 title: "Rename an item or epic safely"
 description: "Add kb work rename, which renames an item or epic file and updates links to it, the roadmap and the catalog."
 tags: [work-item]
-status: draft
+status: stable
 kind: story
-work_status: todo
+work_status: done
 priority: high
 depends_on: []
 links: 
-  github: ""
+  github: "#5"
   jira: ""
   paperclip: "CEN-50"
 generated: 

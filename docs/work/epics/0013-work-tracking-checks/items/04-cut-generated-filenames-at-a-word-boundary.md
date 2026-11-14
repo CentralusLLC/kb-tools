@@ -5,13 +5,13 @@ epic: "0013"
 title: "Cut generated filenames at a word boundary"
 description: "Cut generated epic and item filenames at a word boundary, and add a --slug option."
 tags: [work-item]
-status: draft
+status: stable
 kind: task
-work_status: todo
+work_status: done
 priority: high
 depends_on: []
 links: 
-  github: ""
+  github: "#5"
   jira: ""
   paperclip: "CEN-50"
 generated: 
