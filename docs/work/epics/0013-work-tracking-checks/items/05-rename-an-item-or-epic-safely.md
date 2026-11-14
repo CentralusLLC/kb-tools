@@ -31,12 +31,12 @@ as safe.
 
 ## Acceptance criteria
 
-- [ ] `kb work rename ID --slug SLUG [--title TITLE]` renames an item file or epic folder,
+- [x] `kb work rename ID --slug SLUG [--title TITLE]` renames an item file or epic folder,
       keeps the id, updates the title if given, rewrites relative Markdown links to it in
       `docs/`, and regenerates the roadmap and catalog.
-- [ ] A `kb_work_rename` MCP tool does the same.
-- [ ] `kb check` is clean after a rename; tests cover items and epics, and pass.
-- [ ] Work-tracking docs describe it.
+- [x] A `kb_work_rename` MCP tool does the same.
+- [x] `kb check` is clean after a rename; tests cover items and epics, and pass.
+- [x] Work-tracking docs describe it.
 
 ## Notes
 

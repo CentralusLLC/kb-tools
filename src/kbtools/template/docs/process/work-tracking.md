@@ -40,12 +40,15 @@ docs/work/
 ```
 
 - **IDs are permanent:** epic `0007`, item `0007-02`. They appear in branch names, pull
-  requests and every external copy. Never renumber; cancel instead.
+  requests and every external copy. Never renumber or delete; cancel instead. The slug after
+  the id may change: use `kb work rename`.
 - **One file per item** keeps changes small and avoids merge conflicts between agents.
 - **Plans are knowledge pages** (`type: Epic`, `Implementation Plan`, `Work Item`). Decisions
   that outlive the work become ADRs.
-- **Two status fields:** `status` is OKF page maturity (`draft`/`stable`), `work_status` is the
-  work state:
+- **Two status fields:** `work_status` is the work state (below). `status` is OKF page
+  maturity, as on every page: a work page is `draft` while the work is open and its page still
+  changes, and `stable` once the work is `done` or `cancelled`. `kb work set` changes both, so
+  you never edit `status` by hand (a `deprecated` page is left alone).
 
 | Epic `work_status` | Item `work_status` |
 | --- | --- |
@@ -110,6 +113,7 @@ tools/kb work new-item 0007 "Email verification" --by <you> --kind story --depen
   --description "Users confirm their email address before their first login." --github "#41"
 tools/kb work set 0007-02 in_progress
 tools/kb work set 0007-02 done --pr https://github.com/<owner>/<repo>/pull/57
+tools/kb work rename 0007-02 --slug email-verification --title "Verify email addresses"
 tools/kb work list --open
 tools/kb work index          # regenerate the roadmap (new-epic, new-item and set do it too)
 ```
@@ -118,6 +122,12 @@ tools/kb work index          # regenerate the roadmap (new-epic, new-item and se
 - `--github`, `--jira` and `--paperclip` record the external copies in `links`, on `new-epic`,
   `new-item` and `set`. `set --pr` records the pull request that delivers an item in `links.github`.
 - `set ... done` warns when acceptance criteria are still unticked; the status is set anyway.
+- New folders and files are named after the title, cut at a word boundary within 48
+  characters; `--slug` on `new-epic` and `new-item` chooses the name instead.
+- `rename` gives an epic folder or item file a new slug (`--slug`, or one made from `--title`)
+  and, with `--title`, a new title (for an epic, on its plan too). The id stays. It rewrites
+  relative links to the page under `docs/` and regenerates the roadmap and catalog, so
+  `kb check` stays clean. Don't rename work files by hand.
 
 `tools/kb check` validates the work tree: IDs match folders and files, statuses are valid,
 dependencies exist, closed epics have no open items, planned epics have a plan, and the
@@ -128,6 +138,8 @@ roadmap is current. It also warns about drift:
 | A `done` item has unticked (`- [ ]`) acceptance criteria | Tick them, or say in the item why one no longer applies |
 | Started work (items `in_progress`, `in_review` or `done`; epics `in_progress` or `done`) still has `TODO` placeholders in its description or sections | Fill them in, or delete sections that don't apply. An epic's Retrospective may stay a placeholder until the epic closes |
 | A `backlog`, `todo` or `in_review` item's pull request is merged | Set the item `done`, or `in_progress` if more pull requests follow |
+| A `planned` or `in_progress` epic has items, and all of them are `done` or `cancelled` | Set the epic `done` (after its Acceptance and Retrospective), or add the items still to do |
+| An epic's item numbers have a gap (for example `0001-01` and `0001-03`, but no `0001-02`) | Restore the deleted item with `work_status: cancelled`; ids are never reused |
 
 Merged pull requests are read from the local git history: GitHub's squash-merge titles
 (`[0007-02] Title (#57)`, which may list several items) and merge commits from a

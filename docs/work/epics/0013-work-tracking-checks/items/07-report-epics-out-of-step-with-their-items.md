@@ -30,11 +30,11 @@ Nothing reports an epic that is `in_progress` with every item done, or a skipped
 
 ## Acceptance criteria
 
-- [ ] `kb check` warns about a `planned` or `in_progress` epic with at least one item, all `done`
+- [x] `kb check` warns about a `planned` or `in_progress` epic with at least one item, all `done`
       or `cancelled`.
-- [ ] `kb check` warns about gaps in an epic's item numbers (ids are never reused; cancel
+- [x] `kb check` warns about gaps in an epic's item numbers (ids are never reused; cancel
       instead of deleting).
-- [ ] Tests cover both, and pass.
+- [x] Tests cover both, and pass.
 
 ## Notes
 

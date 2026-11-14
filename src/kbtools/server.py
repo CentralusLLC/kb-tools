@@ -260,28 +260,40 @@ def build_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT):
 
     @mcp.tool(annotations=write)
     def kb_work_new_epic(repo: str, title: str, by: str, priority: str = "medium", status: str = "proposed",
-                         description: str = "", github: str = "", jira: str = "", paperclip: str = "") -> str:
+                         description: str = "", github: str = "", jira: str = "", paperclip: str = "",
+                         slug: str = "") -> str:
         """Create docs/work/epics/NNNN-slug/ with epic.md (business need) and plan.md (implementation plan).
-        `description` is one sentence on the business need; github, jira and paperclip set its links."""
+        `description` is one sentence on the business need; github, jira and paperclip set its links.
+        `slug` names the folder (default: the title, cut at a word boundary)."""
         args = ["work", "new-epic", title, "--by", by, "--priority", priority, "--status", status]
-        return _run(repo, *args, *_options(description=description, github=github, jira=jira, paperclip=paperclip))
+        return _run(repo, *args, *_options(description=description, github=github, jira=jira, paperclip=paperclip,
+                                           slug=slug))
 
     @mcp.tool(annotations=write)
     def kb_work_new_item(repo: str, epic: str, title: str, by: str, kind: str = "story", priority: str = "medium",
                          status: str = "todo", depends_on: list[str] | None = None, description: str = "",
-                         github: str = "", jira: str = "", paperclip: str = "") -> str:
+                         github: str = "", jira: str = "", paperclip: str = "", slug: str = "") -> str:
         """Create a work item in an epic's items/ folder (ids NNNN-NN). kind: story|task|bug|spike|chore.
-        `description` is one sentence on what it delivers; github, jira and paperclip set its links."""
+        `description` is one sentence on what it delivers; github, jira and paperclip set its links.
+        `slug` names the file (default: the title, cut at a word boundary)."""
         args = ["work", "new-item", epic, title, "--by", by, "--kind", kind, "--priority", priority, "--status", status]
         for dependency in depends_on or []:
             args += ["--depends-on", dependency]
-        return _run(repo, *args, *_options(description=description, github=github, jira=jira, paperclip=paperclip))
+        return _run(repo, *args, *_options(description=description, github=github, jira=jira, paperclip=paperclip,
+                                           slug=slug))
+
+    @mcp.tool(annotations=write)
+    def kb_work_rename(repo: str, id: str, slug: str = "", title: str = "") -> str:
+        """Rename an epic folder or item file (the id stays) and optionally retitle it; rewrites
+        relative links to it under docs/ and regenerates the roadmap and catalog. Give slug, title or both."""
+        return _run(repo, "work", "rename", id, *_options(slug=slug, title=title))
 
     @mcp.tool(annotations=write)
     def kb_work_set(repo: str, id: str, status: str, pr: str = "", github: str = "", jira: str = "",
                     paperclip: str = "") -> str:
         """Set work_status of an epic (proposed|planned|in_progress|done|cancelled) or item
-        (backlog|todo|in_progress|in_review|blocked|done|cancelled); regenerates the roadmap.
+        (backlog|todo|in_progress|in_review|blocked|done|cancelled); regenerates the roadmap. OKF
+        status becomes stable when the work closes (done, cancelled) and draft when it reopens.
         `pr` (URL or number) records the delivering pull request in links.github; github, jira and
         paperclip set those links."""
         return _run(repo, "work", "set", id, status, *_options(pr=pr, github=github, jira=jira, paperclip=paperclip))
