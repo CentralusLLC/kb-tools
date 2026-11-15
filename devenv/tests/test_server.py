@@ -131,7 +131,7 @@ def _settings_with(env: dict) -> dict:
     clean = {k: v for k, v in os.environ.items() if not k.startswith("DEVENV_")}
     code = ("import json; from kbdevenv import server as s; "
             "print(json.dumps({'host_ip': s.HOST_IP, 'ports': list(s.PORTS), 'data': str(s.DATA), "
-            "'limits': list(s.LIMITS), 'swap_wait': s.SWAP_WAIT, 'listen': vars(s.parse_args([]))}))")
+            "'preview_ports': list(s.PREVIEW_PORTS), 'limits': list(s.LIMITS), 'swap_wait': s.SWAP_WAIT, 'listen': vars(s.parse_args([]))}))")
     root = str(Path(server.__file__).resolve().parents[1])
     out = subprocess.run([sys.executable, "-c", code], env={**clean, **env, "PYTHONPATH": root},
                          capture_output=True, text=True, check=True).stdout
@@ -141,14 +141,17 @@ def _settings_with(env: dict) -> dict:
 def test_settings_defaults_are_neutral():
     got = _settings_with({})
     assert got["host_ip"] == "127.0.0.1" and got["ports"] == [24000, 24099]
+    assert got["preview_ports"] == [24100, 24199]
     assert got["data"] == "/data" and got["limits"] == ["8g", "6", "4096"] and got["swap_wait"] == 21600
     assert got["listen"] == {"host": "127.0.0.1", "port": 8780}
 
 
 def test_settings_from_environment():
-    got = _settings_with({"DEVENV_HOST_IP": "192.0.2.10", "DEVENV_PORTS": "30000-30009", "DEVENV_DATA": "/srv/devenv",
+    got = _settings_with({"DEVENV_HOST_IP": "192.0.2.10", "DEVENV_PORTS": "30000-30009",
+                          "DEVENV_PREVIEW_PORTS": "30100-30109", "DEVENV_DATA": "/srv/devenv",
                           "DEVENV_MEMORY": "4g", "DEVENV_CPUS": "2", "DEVENV_PIDS": "512", "DEVENV_SWAP_WAIT": "60"})
     assert got["host_ip"] == "192.0.2.10" and got["ports"] == [30000, 30009] and got["data"] == "/srv/devenv"
+    assert got["preview_ports"] == [30100, 30109]
     assert got["limits"] == ["4g", "2", "512"] and got["swap_wait"] == 60
 
 
@@ -165,8 +168,33 @@ def test_compose_takes_every_deployment_value_from_the_environment():
     devenv = Path(server.__file__).resolve().parents[1]
     compose = (devenv / "compose.yaml").read_text()
     assert not re.search(r"\b(?:10|172|192|100)\.\d+\.\d+\.\d+", compose), "no literal IPs in compose.yaml"
-    for name in ("DEVENV_TOKEN", "DEVENV_HOST_IP", "DEVENV_MANAGER_PORT", "DEVENV_PORTS"):
+    for name in ("DEVENV_TOKEN", "DEVENV_HOST_IP", "DEVENV_MANAGER_PORT", "DEVENV_PORTS", "DEVENV_PREVIEW_PORTS"):
         assert "${" + name in compose, name
     example = (devenv / ".env.example").read_text()
     used = set(re.findall(r"\$\{(DEVENV_[A-Z_]+)", compose))
     assert used <= set(re.findall(r"^(DEVENV_[A-Z_]+)=", example, re.M)), "every compose variable is in .env.example"
+
+
+def test_free_preview_port_skips_used_ports():
+    first = server.PREVIEW_PORTS[0]
+    state = {"projects": {"a": {"previews": {"3000": first}}, "b": {"previews": {"8000": first + 1}}, "c": {}}}
+    assert server._free_preview_port(state) == first + 2
+
+
+def test_forwarder_targets_project_by_name(monkeypatch):
+    commands = []
+    monkeypatch.setattr(server, "_run", lambda cmd, *a, **k: commands.append(cmd))
+    monkeypatch.setattr(server.subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0, "", ""))
+    server._start_forwarder("demo", 3000, 24100)
+    cmd = commands[0]
+    assert f"{server.HOST_IP}:24100:8080" in cmd
+    assert cmd[-1] == "TCP:devenv-demo:3000"
+    assert cmd[cmd.index("--network") + 1] == server.NETWORK
+
+
+def test_busy_check_counts_ssh_sessions_only(monkeypatch):
+    seen = []
+    monkeypatch.setattr(server.subprocess, "run",
+                        lambda cmd, **k: seen.append(cmd) or subprocess.CompletedProcess(cmd, 1, b"", b""))
+    assert server._agent_busy("p") is False
+    assert seen[0][-2:] == ["-f", "^sshd: agent"]
