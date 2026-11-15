@@ -56,6 +56,8 @@ Command-line flags override the environment.
 | `DEVENV_HOST_IP` | Host address the manager and dev containers' sshd are published on; must be reachable from the Paperclip server and private | `127.0.0.1` | no |
 | `DEVENV_MANAGER_PORT` | Host port of the manager's MCP endpoint (`http://<host-ip>:<manager-port>/mcp`) | `8780` | no |
 | `DEVENV_PORTS` | Host port range for dev containers' sshd, one per project | `24000-24099` | no |
+| `DEVENV_PREVIEW_PORTS` | Host port range for app ports published with `devenv_expose`, one per exposed port | `24100-24199` | no |
+| `DEVENV_FORWARDER_IMAGE` | Image of the preview forwarder containers | `alpine/socat:1.8.0.3` | no |
 | `DEVENV_DATA` | State, logs and build contexts inside the manager container | `/data` | no |
 | `DEVENV_PUBKEY` | Fallback SSH public key for projects created without one | `/data/keys/paperclip.pub` (optional) | no |
 | `DEVENV_MEMORY` / `DEVENV_CPUS` / `DEVENV_PIDS` | Per-container limits | `8g` / `6` / `4096` | no |

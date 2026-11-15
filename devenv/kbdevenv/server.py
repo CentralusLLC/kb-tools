@@ -20,6 +20,9 @@ Environment:
   DEVENV_DATA       state, logs and build contexts (default /data)
   DEVENV_PUBKEY     fallback public key for projects created without one
                     (default /data/keys/paperclip.pub; optional)
+  DEVENV_PREVIEW_PORTS  host port range for app ports published with devenv_expose
+                    (default 24100-24199)
+  DEVENV_FORWARDER_IMAGE  image of the preview forwarders (default alpine/socat:1.8.0.3)
   DEVENV_MEMORY / DEVENV_CPUS / DEVENV_PIDS   container limits (default 8g / 6 / 4096)
 """
 
@@ -40,10 +43,15 @@ from pathlib import Path
 
 DEFAULT_HOST_IP = "127.0.0.1"
 DEFAULT_PORTS = "24000-24099"
+DEFAULT_PREVIEW_PORTS = "24100-24199"
 DATA = Path(os.environ.get("DEVENV_DATA", "/data"))
 HOST_IP = os.environ.get("DEVENV_HOST_IP", "").strip() or DEFAULT_HOST_IP
 PORTS = tuple(int(p) for p in (os.environ.get("DEVENV_PORTS", "").strip() or DEFAULT_PORTS).split("-"))
 PUBKEY = Path(os.environ.get("DEVENV_PUBKEY", str(DATA / "keys" / "paperclip.pub")))
+PREVIEW_PORTS = tuple(int(p) for p in (os.environ.get("DEVENV_PREVIEW_PORTS", "").strip()
+                                       or DEFAULT_PREVIEW_PORTS).split("-"))
+NETWORK = "devenv"          # user-defined network: dev containers reachable by name from forwarders
+FORWARDER_IMAGE = os.environ.get("DEVENV_FORWARDER_IMAGE", "").strip() or "alpine/socat:1.8.0.3"
 LIMITS = (os.environ.get("DEVENV_MEMORY", "8g"), os.environ.get("DEVENV_CPUS", "6"), os.environ.get("DEVENV_PIDS", "4096"))
 STATE = DATA / "state.json"
 LOGS = DATA / "logs"
@@ -56,6 +64,7 @@ CONTEXT_EXCLUDES = (".git", "node_modules", ".venv", "venv", "__pycache__", ".py
                     ".mypy_cache", ".ruff_cache", ".dart_tool")
 SWAP_WAIT = int(os.environ.get("DEVENV_SWAP_WAIT", str(6 * 3600)))  # seconds to wait for agent sessions to end
 _lock = threading.RLock()
+SSH_SESSION = r"^sshd(-session)?: agent"  # pgrep pattern for an open agent SSH session
 
 
 # ---------------------------------------------------------------- state
@@ -224,15 +233,91 @@ def _start(project: str, entry: dict, log: Path) -> None:
         if result.returncode == 0 and result.stdout.strip():
             key = " ".join(result.stdout.split()[:2])
             _update(project, known_hosts=f"[{HOST_IP}]:{entry['port']} {key}")
+            if entry.get("previews"):
+                _ensure_network(project)  # forwarders reach the new container by name
             return
         time.sleep(1)
     raise RuntimeError("sshd host key did not appear")
 
 
 def _agent_busy(project: str) -> bool:
-    """True while any process runs as `agent` in the container (an SSH session or agent run)."""
-    result = subprocess.run(["docker", "exec", f"devenv-{project}", "pgrep", "-u", "agent"], capture_output=True)
+    """True while an SSH session (an agent run) is open in the container. Background servers
+    the agent left running (previews) do not count: they end with the container anyway.
+    OpenSSH before 9.8 titles the per-session process `sshd: agent...`; 9.8 and later run it as
+    `sshd-session: agent...`. The overlay installs the base image's openssh-server, so both occur."""
+    result = subprocess.run(["docker", "exec", f"devenv-{project}", "pgrep", "-f", SSH_SESSION],
+                            capture_output=True)
     return result.returncode == 0
+
+
+# ---------------------------------------------------------------- previews
+
+def _ensure_network(project: str) -> None:
+    subprocess.run(["docker", "network", "create", NETWORK], capture_output=True)  # exists: fine
+    result = subprocess.run(["docker", "network", "connect", "--alias", f"devenv-{project}", NETWORK,
+                             f"devenv-{project}"], capture_output=True, text=True)
+    if result.returncode != 0 and "already exists" not in result.stderr:
+        raise RuntimeError(f"network connect failed: {result.stderr.strip()[-400:]}")
+
+
+def _free_preview_port(state: dict) -> int:
+    used = {hp for e in state["projects"].values() for hp in (e.get("previews") or {}).values()}
+    for port in range(PREVIEW_PORTS[0], PREVIEW_PORTS[1] + 1):
+        if port not in used:
+            return port
+    raise RuntimeError("no free preview ports left")
+
+
+def _start_forwarder(project: str, container_port: int, host_port: int) -> None:
+    """A tiny socat container on the devenv network publishes HOST_IP:host_port and forwards to
+    devenv-<project>:container_port by name, so it survives dev-container rebuilds."""
+    name = f"devenv-{project}-preview-{container_port}"
+    subprocess.run(["docker", "rm", "-f", name], capture_output=True)
+    _run(["docker", "run", "-d", "--name", name, "--restart", "unless-stopped", "--network", NETWORK,
+          "-p", f"{HOST_IP}:{host_port}:8080", "--memory", "64m", "--pids-limit", "256",
+          "--label", "devenv.project=" + project, "--label", "devenv.preview=" + str(container_port),
+          FORWARDER_IMAGE, "TCP-LISTEN:8080,fork,reuseaddr", f"TCP:devenv-{project}:{container_port}"])
+
+
+def _expose(project: str, port: int) -> int:
+    """Publish devenv-<project>:port; returns the host port. The host port is reserved in state
+    under _lock before the forwarder starts, so concurrent calls never pick the same one, and the
+    reservation is rolled back if the forwarder fails to start."""
+    key = str(port)
+    with _lock:
+        state = _load()
+        entry = state["projects"].get(project)
+        if entry is None:
+            raise LookupError(f"no dev environment for {project}")
+        previews = entry.setdefault("previews", {})
+        reused = key in previews
+        host_port = previews.get(key) or _free_preview_port(state)
+        previews[key] = host_port
+        _save(state)
+    try:
+        _ensure_network(project)
+        _start_forwarder(project, port, host_port)
+    except Exception:
+        if not reused:
+            with _lock:
+                state = _load()
+                previews = (state["projects"].get(project) or {}).get("previews") or {}
+                if previews.get(key) == host_port:
+                    del previews[key]
+                    _save(state)
+        raise
+    return host_port
+
+
+def _unexpose(project: str, port: int) -> None:
+    with _lock:
+        state = _load()
+        entry = state["projects"].get(project)
+        if entry is None:
+            raise LookupError(f"no dev environment for {project}")
+        subprocess.run(["docker", "rm", "-f", f"devenv-{project}-preview-{port}"], capture_output=True)
+        (entry.get("previews") or {}).pop(str(port), None)
+        _save(state)
 
 
 def _wait_idle(project: str, log: Path) -> None:
@@ -321,7 +406,7 @@ def build_server(host: str, port: int):
             if entry.get("status") == "failed" and log.exists():
                 out["log_tail"] = log.read_text()[-3000:]
             return json.dumps(out, indent=2)
-        return json.dumps({k: {f: v.get(f) for f in ("status", "port", "built_from", "updated_at")}
+        return json.dumps({k: {f: v.get(f) for f in ("status", "port", "previews", "built_from", "updated_at")}
                            for k, v in state.items()}, indent=2)
 
     @mcp.tool(annotations=write)
@@ -393,6 +478,37 @@ def build_server(host: str, port: int):
                 ".devcontainer (in a pull request) so people get them too.")
 
     @mcp.tool(annotations=write)
+    def devenv_expose(project: str, port: int) -> str:
+        """Make an app port inside the dev environment (a dev server, a built game) reachable for
+        people to test: published on the host's internal address, which the owner then serves on
+        the tailnet over HTTPS (tailscale serve). Start the server bound to 0.0.0.0 first. Returns
+        the internal address. Requires approval."""
+        name = check_name(project)
+        if not 1024 <= int(port) <= 65535 or int(port) == 22:
+            return "error: port must be 1024-65535"
+        port = int(port)
+        try:
+            host_port = _expose(name, port)
+        except LookupError as error:
+            return str(error)
+        except Exception as error:
+            return f"error: {error}"
+        return (f"{name}:{port} is published at http://{HOST_IP}:{host_port} (internal). To reach it on "
+                f"the tailnet the owner runs on the Paperclip host: sudo tailscale serve --bg --https=<public port> "
+                f"http://{HOST_IP}:{host_port}")
+
+    @mcp.tool(annotations=write)
+    def devenv_unexpose(project: str, port: int) -> str:
+        """Stop publishing an app port exposed with devenv_expose (the owner also removes the
+        matching tailscale serve entry)."""
+        name = check_name(project)
+        try:
+            _unexpose(name, int(port))
+        except LookupError as error:
+            return str(error)
+        return f"stopped publishing {name}:{int(port)}"
+
+    @mcp.tool(annotations=write)
     def devenv_stop(project: str) -> str:
         """Stop a project's dev environment container (keeps image and volumes)."""
         name = check_name(project)
@@ -405,6 +521,8 @@ def build_server(host: str, port: int):
         """Delete a project's dev environment: container and images; with delete_home also its
         home volume (caches, agent logins). Destructive; for archived projects."""
         name = check_name(project)
+        for preview in (_load()["projects"].get(name, {}).get("previews") or {}):
+            subprocess.run(["docker", "rm", "-f", f"devenv-{name}-preview-{preview}"], capture_output=True)
         for cmd in (["docker", "rm", "-f", f"devenv-{name}"],
                     ["docker", "rmi", f"devenv-{name}:latest", f"devenv-{name}-base:latest"]):
             subprocess.run(cmd, capture_output=True)

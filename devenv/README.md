@@ -8,6 +8,9 @@ environment**. See epic 0010 in `docs/work/` and `docs/environments/agent-dev-en
   `kbdevenv/default/`; `devenv_rebuild` then builds the `.devcontainer/` (image or Dockerfile
   build, with target and args) from that synced worktree. The container is swapped only once no
   agent session is running in it.
+- **Previews:** `devenv_expose` publishes an app port through a small forwarder container on
+  `DEVENV_HOST_IP`, using a port from `DEVENV_PREVIEW_PORTS`; an admin serves it on the tailnet
+  (`tailscale serve`).
 - **Per-project SSH keys:** `devenv_create` takes the public key; the agent stores the private
   half in Paperclip through an approved secret proposal.
 - Adds the **agent overlay** (`kbdevenv/overlay/`): sshd (key-only, user `agent`, no sudo),
@@ -15,8 +18,8 @@ environment**. See epic 0010 in `docs/work/` and `docs/environments/agent-dev-en
 - Runs one container per project with sshd on `DEVENV_HOST_IP:<port>` (a port in `DEVENV_PORTS`), a
   persistent home volume, a stable host-key volume, and memory, CPU and pids limits.
 - Exposes MCP tools behind a bearer token: `devenv_status` (read), `devenv_create`,
-  `devenv_rebuild`, `devenv_install` (system packages; approval in Paperclip), `devenv_stop`,
-  and `devenv_delete` (destructive).
+  `devenv_rebuild`, `devenv_install` (system packages; approval in Paperclip), `devenv_expose` /
+  `devenv_unexpose` (previews), `devenv_stop`, and `devenv_delete` (destructive).
 
 Deploy: copy `.env.example` to `.env` (git-ignored), fill it in, then `docker compose up -d --build`.
 Every setting is listed in `docs/environments/configuration.md`.

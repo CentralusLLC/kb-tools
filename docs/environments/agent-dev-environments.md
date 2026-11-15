@@ -68,7 +68,7 @@ flowchart LR
 
 Once per company, the owner adds the manager as an MCP connection (`http://<host-ip>:<manager-port>/mcp`,
 header `Authorization: Bearer <DEVENV_TOKEN>`) and sets **ask first** on `devenv_create`,
-`devenv_rebuild` and `devenv_install`. Then, per project:
+`devenv_rebuild`, `devenv_install` and `devenv_expose`. Then, per project:
 
 1. The agent generates an ed25519 key pair and submits the private key as a **secret proposal**
    (for example `DEVENV_SSH_KEY_<PROJECT>`); the owner approves the card. The key is never printed.
@@ -85,6 +85,30 @@ header `Authorization: Bearer <DEVENV_TOKEN>`) and sets **ask first** on `devenv
 System packages: preferably a pull request to `.devcontainer/` followed by `devenv_rebuild`, so
 the review is the approval; `devenv_install` (approval card) for urgent needs, persisted for
 rebuilds.
+
+## Previews: letting people test what an agent built
+
+An agent starts its server inside the dev container, bound to `0.0.0.0`, and calls
+`devenv_expose(project, port)` (approval card). The manager starts a small forwarder container
+(`devenv-PROJECT-preview-PORT`, `alpine/socat`) on the `devenv` network that publishes
+a port from `DEVENV_PREVIEW_PORTS` on `DEVENV_HOST_IP` and reaches the dev container by name, so it survives rebuilds. An
+admin then puts it on the tailnet over HTTPS (root on the Paperclip host):
+
+```sh
+sudo tailscale serve --bg --https=<public port> http://<host-ip>:<preview port>
+sudo tailscale serve --https=<public port> off     # remove
+```
+
+`devenv_unexpose` stops a forwarder; `devenv_status` lists each project's previews
+(container port -> host port). The dev container's own address lives in agentdev's rootless
+network and is not reachable from the host, which is why previews go through a forwarder.
+
+Rebuild swaps wait only for open SSH sessions, not for servers an agent left running; those
+end with the old container and must be restarted. The check matches both process names
+OpenSSH uses for a session: `sshd: agent` before 9.8 and `sshd-session: agent` from 9.8 on.
+The overlay installs the base image's own `openssh-server`, so the version follows the
+project image (the default image, Debian bookworm, ships 9.2p1; Ubuntu 24.04 ships 9.6p1;
+Debian trixie ships 10.0p1).
 
 ## Deploying the manager
 
