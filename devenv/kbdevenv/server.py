@@ -64,6 +64,7 @@ CONTEXT_EXCLUDES = (".git", "node_modules", ".venv", "venv", "__pycache__", ".py
                     ".mypy_cache", ".ruff_cache", ".dart_tool")
 SWAP_WAIT = int(os.environ.get("DEVENV_SWAP_WAIT", str(6 * 3600)))  # seconds to wait for agent sessions to end
 _lock = threading.RLock()
+SSH_SESSION = r"^sshd(-session)?: agent"  # pgrep pattern for an open agent SSH session
 
 
 # ---------------------------------------------------------------- state
@@ -241,8 +242,10 @@ def _start(project: str, entry: dict, log: Path) -> None:
 
 def _agent_busy(project: str) -> bool:
     """True while an SSH session (an agent run) is open in the container. Background servers
-    the agent left running (previews) do not count: they end with the container anyway."""
-    result = subprocess.run(["docker", "exec", f"devenv-{project}", "pgrep", "-f", "^sshd: agent"],
+    the agent left running (previews) do not count: they end with the container anyway.
+    OpenSSH before 9.8 titles the per-session process `sshd: agent...`; 9.8 and later run it as
+    `sshd-session: agent...`. The overlay installs the base image's openssh-server, so both occur."""
+    result = subprocess.run(["docker", "exec", f"devenv-{project}", "pgrep", "-f", SSH_SESSION],
                             capture_output=True)
     return result.returncode == 0
 
@@ -274,6 +277,47 @@ def _start_forwarder(project: str, container_port: int, host_port: int) -> None:
           "-p", f"{HOST_IP}:{host_port}:8080", "--memory", "64m", "--pids-limit", "256",
           "--label", "devenv.project=" + project, "--label", "devenv.preview=" + str(container_port),
           FORWARDER_IMAGE, "TCP-LISTEN:8080,fork,reuseaddr", f"TCP:devenv-{project}:{container_port}"])
+
+
+def _expose(project: str, port: int) -> int:
+    """Publish devenv-<project>:port; returns the host port. The host port is reserved in state
+    under _lock before the forwarder starts, so concurrent calls never pick the same one, and the
+    reservation is rolled back if the forwarder fails to start."""
+    key = str(port)
+    with _lock:
+        state = _load()
+        entry = state["projects"].get(project)
+        if entry is None:
+            raise LookupError(f"no dev environment for {project}")
+        previews = entry.setdefault("previews", {})
+        reused = key in previews
+        host_port = previews.get(key) or _free_preview_port(state)
+        previews[key] = host_port
+        _save(state)
+    try:
+        _ensure_network(project)
+        _start_forwarder(project, port, host_port)
+    except Exception:
+        if not reused:
+            with _lock:
+                state = _load()
+                previews = (state["projects"].get(project) or {}).get("previews") or {}
+                if previews.get(key) == host_port:
+                    del previews[key]
+                    _save(state)
+        raise
+    return host_port
+
+
+def _unexpose(project: str, port: int) -> None:
+    with _lock:
+        state = _load()
+        entry = state["projects"].get(project)
+        if entry is None:
+            raise LookupError(f"no dev environment for {project}")
+        subprocess.run(["docker", "rm", "-f", f"devenv-{project}-preview-{port}"], capture_output=True)
+        (entry.get("previews") or {}).pop(str(port), None)
+        _save(state)
 
 
 def _wait_idle(project: str, log: Path) -> None:
@@ -443,20 +487,12 @@ def build_server(host: str, port: int):
         if not 1024 <= int(port) <= 65535 or int(port) == 22:
             return "error: port must be 1024-65535"
         port = int(port)
-        with _lock:
-            state = _load()
-            entry = state["projects"].get(name)
-            if not entry:
-                return f"no dev environment for {name}"
-            previews = dict(entry.get("previews") or {})
-            host_port = previews.get(str(port)) or _free_preview_port(state)
         try:
-            _ensure_network(name)
-            _start_forwarder(name, port, host_port)
+            host_port = _expose(name, port)
+        except LookupError as error:
+            return str(error)
         except Exception as error:
             return f"error: {error}"
-        previews[str(port)] = host_port
-        _update(name, previews=previews)
         return (f"{name}:{port} is published at http://{HOST_IP}:{host_port} (internal). To reach it on "
                 f"the tailnet the owner runs on the Paperclip host: sudo tailscale serve --bg --https=<public port> "
                 f"http://{HOST_IP}:{host_port}")
@@ -466,12 +502,10 @@ def build_server(host: str, port: int):
         """Stop publishing an app port exposed with devenv_expose (the owner also removes the
         matching tailscale serve entry)."""
         name = check_name(project)
-        entry = _load()["projects"].get(name)
-        if not entry:
-            return f"no dev environment for {name}"
-        subprocess.run(["docker", "rm", "-f", f"devenv-{name}-preview-{int(port)}"], capture_output=True)
-        previews = {k: v for k, v in (entry.get("previews") or {}).items() if k != str(int(port))}
-        _update(name, previews=previews)
+        try:
+            _unexpose(name, int(port))
+        except LookupError as error:
+            return str(error)
         return f"stopped publishing {name}:{int(port)}"
 
     @mcp.tool(annotations=write)

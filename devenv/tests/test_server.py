@@ -192,9 +192,97 @@ def test_forwarder_targets_project_by_name(monkeypatch):
     assert cmd[cmd.index("--network") + 1] == server.NETWORK
 
 
-def test_busy_check_counts_ssh_sessions_only(monkeypatch):
-    seen = []
-    monkeypatch.setattr(server.subprocess, "run",
-                        lambda cmd, **k: seen.append(cmd) or subprocess.CompletedProcess(cmd, 1, b"", b""))
+def _pgrep(monkeypatch, processes):
+    """Fake `docker exec ... pgrep -f PATTERN` over the given process titles."""
+    import re
+
+    def run(cmd, **k):
+        found = any(re.search(cmd[-1], title) for title in processes)
+        return subprocess.CompletedProcess(cmd, 0 if found else 1, b"", b"")
+    monkeypatch.setattr(server.subprocess, "run", run)
+
+
+@pytest.mark.parametrize("title", [
+    "sshd: agent@notty",              # OpenSSH < 9.8 (Debian bookworm 9.2p1, Ubuntu 24.04 9.6p1)
+    "sshd: agent [priv]",
+    "sshd-session: agent@notty",      # OpenSSH >= 9.8 (Debian trixie 10.0p1)
+    "sshd-session: agent [priv]",
+])
+def test_busy_check_sees_ssh_sessions_of_old_and_new_openssh(monkeypatch, title):
+    _pgrep(monkeypatch, ["sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups", title])
+    assert server._agent_busy("p") is True
+
+
+def test_busy_check_ignores_listener_and_background_servers(monkeypatch):
+    _pgrep(monkeypatch, ["sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups",
+                         "/usr/sbin/sshd -D", "node server.js --host 0.0.0.0", "python -m http.server 3000"])
     assert server._agent_busy("p") is False
-    assert seen[0][-2:] == ["-f", "^sshd: agent"]
+
+
+def _fake_forwarders(monkeypatch, fail=False):
+    started = []
+    monkeypatch.setattr(server, "_ensure_network", lambda project: None)
+
+    def start(project, container_port, host_port):
+        if fail:
+            raise RuntimeError("docker run failed")
+        started.append((project, container_port, host_port))
+    monkeypatch.setattr(server, "_start_forwarder", start)
+    return started
+
+
+def test_expose_reserves_distinct_ports_concurrently(monkeypatch):
+    import threading
+    server._save({"projects": {"a": {}, "b": {}}})
+    gate = threading.Barrier(8)
+    monkeypatch.setattr(server, "_ensure_network", lambda project: gate.wait(timeout=5))
+    monkeypatch.setattr(server, "_start_forwarder", lambda *a: None)
+    results = []
+    threads = [threading.Thread(target=lambda i=i: results.append(server._expose("ab"[i % 2], 3000 + i)))
+               for i in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert len(set(results)) == 8, "every concurrent expose gets its own host port"
+    saved = server._load()["projects"]
+    assert sorted([*saved["a"]["previews"].values(), *saved["b"]["previews"].values()]) == sorted(results)
+
+
+def test_expose_reuses_the_host_port_of_an_exposed_port(monkeypatch):
+    server._save({"projects": {"demo": {}}})
+    started = _fake_forwarders(monkeypatch)
+    first = server._expose("demo", 3000)
+    assert server._expose("demo", 3000) == first
+    assert started == [("demo", 3000, first), ("demo", 3000, first)]
+
+
+def test_expose_rolls_back_the_reservation_when_the_forwarder_fails(monkeypatch):
+    server._save({"projects": {"demo": {"previews": {"8000": server.PREVIEW_PORTS[0]}}}})
+    _fake_forwarders(monkeypatch, fail=True)
+    with pytest.raises(RuntimeError, match="docker run failed"):
+        server._expose("demo", 3000)
+    assert server._load()["projects"]["demo"]["previews"] == {"8000": server.PREVIEW_PORTS[0]}
+    # A failed restart of an already exposed port keeps its existing reservation.
+    with pytest.raises(RuntimeError):
+        server._expose("demo", 8000)
+    assert server._load()["projects"]["demo"]["previews"] == {"8000": server.PREVIEW_PORTS[0]}
+
+
+def test_expose_and_unexpose_unknown_project():
+    server._save({"projects": {}})
+    with pytest.raises(LookupError):
+        server._expose("demo", 3000)
+    with pytest.raises(LookupError):
+        server._unexpose("demo", 3000)
+
+
+def test_unexpose_removes_forwarder_and_state(monkeypatch):
+    first = server.PREVIEW_PORTS[0]
+    server._save({"projects": {"demo": {"previews": {"3000": first, "8000": first + 1}}}})
+    removed = []
+    monkeypatch.setattr(server.subprocess, "run",
+                        lambda cmd, **k: removed.append(cmd) or subprocess.CompletedProcess(cmd, 0, "", ""))
+    server._unexpose("demo", 3000)
+    assert removed == [["docker", "rm", "-f", "devenv-demo-preview-3000"]]
+    assert server._load()["projects"]["demo"]["previews"] == {"8000": first + 1}

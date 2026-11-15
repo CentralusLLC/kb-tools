@@ -103,8 +103,12 @@ sudo tailscale serve --https=<public port> off     # remove
 (container port -> host port). The dev container's own address lives in agentdev's rootless
 network and is not reachable from the host, which is why previews go through a forwarder.
 
-Rebuild swaps wait only for open SSH sessions (`sshd: agent`), not for servers an agent left
-running; those end with the old container and must be restarted.
+Rebuild swaps wait only for open SSH sessions, not for servers an agent left running; those
+end with the old container and must be restarted. The check matches both process names
+OpenSSH uses for a session: `sshd: agent` before 9.8 and `sshd-session: agent` from 9.8 on.
+The overlay installs the base image's own `openssh-server`, so the version follows the
+project image (the default image, Debian bookworm, ships 9.2p1; Ubuntu 24.04 ships 9.6p1;
+Debian trixie ships 10.0p1).
 
 ## Deploying the manager
 

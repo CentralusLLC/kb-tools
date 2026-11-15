@@ -33,15 +33,19 @@ name, so a preview survives rebuilds. An admin then serves it on the tailnet ove
 
 Rebuild swaps used to wait for any process running as `agent`, so a preview server left
 running blocked a rebuild for the whole `DEVENV_SWAP_WAIT`. They now wait only for open SSH
-sessions (`sshd: agent`); servers end with the old container and must be restarted.
+sessions (`sshd: agent`, or `sshd-session: agent` on OpenSSH 9.8 and later); servers end
+with the old container and must be restarted.
 
 ## Acceptance criteria
 
 - [x] `devenv_expose` publishes a container port on `DEVENV_HOST_IP` with a free port from
       `DEVENV_PREVIEW_PORTS`, and reuses the host port when the same port is exposed again
+- [x] The host port is reserved in state under the manager's lock before the forwarder starts
+      (concurrent calls get distinct ports) and released if the forwarder fails to start
 - [x] Forwarders reach the dev container by name and are reconnected after a rebuild
 - [x] `devenv_unexpose` and `devenv_delete` remove the forwarders; `devenv_status` lists previews
-- [x] Rebuild swaps wait only for open SSH sessions
+- [x] Rebuild swaps wait only for open SSH sessions, with both OpenSSH session process names
+      (`sshd:` before 9.8, `sshd-session:` from 9.8)
 - [x] `DEVENV_PREVIEW_PORTS` and `DEVENV_FORWARDER_IMAGE` have neutral defaults and are in
       `compose.yaml`, `.env.example` and [Configuration](../../../../environments/configuration.md)
 - [x] Tests; docs in [Agent dev environments](../../../../environments/agent-dev-environments.md),
@@ -56,3 +60,6 @@ sessions (`sshd: agent`); servers end with the old container and must be restart
   list. The old branch is deleted.
 - Deployments that already run previews set `DEVENV_PREVIEW_PORTS` in their `.env` to keep
   their existing host ports.
+- Chief's review of #9 asked for the `sshd-session` match and for the port reservation under
+  the lock. The overlay installs the base image's `openssh-server`: 9.2p1 on the default
+  image (Debian bookworm), 10.0p1 on Debian trixie images.
