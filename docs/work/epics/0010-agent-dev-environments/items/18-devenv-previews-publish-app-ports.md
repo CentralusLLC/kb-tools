@@ -7,11 +7,11 @@ description: "devenv_expose and devenv_unexpose publish an app port from a dev c
 tags: [work-item]
 status: stable
 kind: story
-work_status: todo
+work_status: done
 priority: medium
 depends_on: []
 links: 
-  github: ""
+  github: "#9"
   jira: ""
   paperclip: "CEN-61"
 generated: 
